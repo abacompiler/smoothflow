@@ -4,6 +4,7 @@ import { createPageUrl } from '@/utils';
 import { CalendarDays, Tag, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
+import SettingsMenu from '@/components/settings/SettingsMenu';
 
 const navItems = [
   { name: 'Dashboard', icon: CalendarDays, page: 'Dashboard' },
@@ -42,7 +43,9 @@ export default function Layout({ children, currentPageName }) {
             );
           })}
         </nav>
-        <div className="p-3 border-t" />
+        <div className="p-3 border-t">
+          <SettingsMenu />
+        </div>
       </aside>
 
       {/* Mobile Header */}
@@ -83,6 +86,9 @@ export default function Layout({ children, currentPageName }) {
                 </Link>
               );
             })}
+            <div className="pt-2 mt-2 border-t">
+              <SettingsMenu mobile />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

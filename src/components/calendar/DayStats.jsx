@@ -8,7 +8,7 @@ export default function DayStats({ activities }) {
   const hours = Math.floor(totalMinutes / 60);
   const mins = totalMinutes % 60;
   const highPriority = activities.filter(a => a.priority === 'high').length;
-  const freeMinutes = (16 * 60) - totalMinutes; // 6:00-22:00 = 16h
+  const freeMinutes = (24 * 60) - totalMinutes; // 00:00-24:00 = 24h
   const freeHours = Math.floor(Math.max(0, freeMinutes) / 60);
   const freeMins = Math.max(0, freeMinutes) % 60;
 

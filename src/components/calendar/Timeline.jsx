@@ -3,46 +3,67 @@ import EventCard from './EventCard';
 import { AnimatePresence } from 'framer-motion';
 import { endsNextDay, startsOnDate, toMinutes } from '@/lib/activityUtils';
 
-const START_HOUR = 6;
-const END_HOUR = 22;
+const DEFAULT_START_HOUR = 7;
+const DEFAULT_END_HOUR = 23;
+const MIN_HOUR = 0;
+const MAX_HOUR = 24;
 const HOUR_HEIGHT = 80;
-const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60;
-
-const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => i + START_HOUR);
 const EVENT_GAP_PX = 6;
 
-const getVisibleRange = (activity, selectedDate) => {
+const getEventBounds = (activity, selectedDate) => {
   const isStartingToday = startsOnDate(activity, selectedDate);
   const overnight = endsNextDay(activity);
 
-  let startMinutes = isStartingToday ? toMinutes(activity.start_time) : 0;
-  let endMinutes = isStartingToday
+  const startMinutes = isStartingToday ? toMinutes(activity.start_time) : 0;
+  const endMinutes = isStartingToday
     ? (overnight ? (24 * 60) + toMinutes(activity.end_time) : toMinutes(activity.end_time))
     : toMinutes(activity.end_time);
 
-  const windowStart = START_HOUR * 60;
-  const windowEnd = END_HOUR * 60;
-
-  startMinutes = Math.max(startMinutes, windowStart);
-  endMinutes = Math.min(endMinutes, windowEnd);
-
-  if (endMinutes <= startMinutes) return null;
-
-  return { startMinutes, endMinutes };
+  return {
+    startMinutes: Math.max(MIN_HOUR * 60, startMinutes),
+    endMinutes: Math.min(MAX_HOUR * 60, endMinutes)
+  };
 };
+
+function getTimeWindow(activities, selectedDate) {
+  let minHour = DEFAULT_START_HOUR;
+  let maxHour = DEFAULT_END_HOUR;
+
+  activities.forEach((activity) => {
+    const { startMinutes, endMinutes } = getEventBounds(activity, selectedDate);
+    if (endMinutes <= startMinutes) return;
+
+    minHour = Math.min(minHour, Math.floor(startMinutes / 60));
+    maxHour = Math.max(maxHour, Math.ceil(endMinutes / 60));
+  });
+
+  return {
+    startHour: Math.max(MIN_HOUR, minHour),
+    endHour: Math.min(MAX_HOUR, maxHour)
+  };
+}
 
 export default function Timeline({ activities, categories, onEdit, onDelete, selectedDate }) {
   const getCategoryById = (id) => categories.find((c) => c.id === id);
 
+  const { startHour, endHour } = getTimeWindow(activities, selectedDate);
+  const totalMinutes = (endHour - startHour) * 60;
+  const hours = Array.from({ length: endHour - startHour + 1 }, (_, i) => i + startHour);
+
   const visibleActivities = activities
     .map((activity) => {
-      const range = getVisibleRange(activity, selectedDate);
-      if (!range) return null;
+      const { startMinutes, endMinutes } = getEventBounds(activity, selectedDate);
+      const windowStart = startHour * 60;
+      const windowEnd = endHour * 60;
+      const clampedStart = Math.max(startMinutes, windowStart);
+      const clampedEnd = Math.min(endMinutes, windowEnd);
+
+      if (clampedEnd <= clampedStart) return null;
 
       return {
         activity,
-        startMinutes: range.startMinutes,
-        endMinutes: range.endMinutes
+        startMinutes: clampedStart,
+        endMinutes: clampedEnd
       };
     })
     .filter(Boolean)
@@ -102,7 +123,7 @@ export default function Timeline({ activities, categories, onEdit, onDelete, sel
     });
 
     return withColumns.map((event) => {
-      const top = ((event.startMinutes - (START_HOUR * 60)) / 60) * HOUR_HEIGHT;
+      const top = ((event.startMinutes - (startHour * 60)) / 60) * HOUR_HEIGHT;
       const height = ((event.endMinutes - event.startMinutes) / 60) * HOUR_HEIGHT;
       const widthPercent = 100 / maxColumns;
       const leftPercent = event.column * widthPercent;
@@ -119,7 +140,7 @@ export default function Timeline({ activities, categories, onEdit, onDelete, sel
 
   return (
     <div className="relative">
-      {HOURS.map((hour) => (
+      {hours.map((hour) => (
         <div key={hour} className="flex items-start min-h-[80px] group">
           <div className="w-16 flex-shrink-0 text-xs font-medium text-muted-foreground pt-0.5 text-right pr-4">
             {String(hour).padStart(2, '0')}:00
@@ -128,7 +149,7 @@ export default function Timeline({ activities, categories, onEdit, onDelete, sel
         </div>
       ))}
 
-      <div className="absolute top-0 left-16 right-0 pl-4" style={{ height: (TOTAL_MINUTES / 60) * HOUR_HEIGHT }}>
+      <div className="absolute top-0 left-16 right-0 pl-4" style={{ height: (totalMinutes / 60) * HOUR_HEIGHT }}>
         <AnimatePresence>
           {positionedActivities.map(({ activity, top, height, leftPercent, widthPercent }) => (
             <div

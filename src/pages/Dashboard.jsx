@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { apiClient } from '@/api/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -12,13 +12,20 @@ import DayStats from '../components/calendar/DayStats';
 import ReminderChecker from '../components/calendar/ReminderChecker';
 import { motion } from 'framer-motion';
 import { occursOnDate } from '@/lib/activityUtils';
+import { useAppSettings } from '@/lib/AppSettingsContext';
+import { endOfWeek, getWeekDays, startOfWeek } from '@/lib/dateUtils';
 
 export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(moment().format('YYYY-MM-DD'));
-  const [viewMode, setViewMode] = useState('day'); // 'day' | 'week' | 'month'
+  const { settings } = useAppSettings();
+  const [viewMode, setViewMode] = useState(settings.defaultView); // 'day' | 'week' | 'month'
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState(null);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    setViewMode(settings.defaultView);
+  }, [settings.defaultView]);
 
   const { data: activities = [] } = useQuery({
     queryKey: ['activities'],
@@ -85,8 +92,8 @@ export default function Dashboard() {
       return isToday ? 'Oggi' : moment(selectedDate).format('dddd');
     }
     if (viewMode === 'week') {
-      const ws = moment(selectedDate).startOf('week');
-      const we = moment(selectedDate).endOf('week');
+      const ws = startOfWeek(selectedDate, settings.weekStartsOn);
+      const we = endOfWeek(selectedDate, settings.weekStartsOn);
       return `${ws.format('D MMM')} – ${we.format('D MMM YYYY')}`;
     }
     return moment(selectedDate).format('MMMM YYYY');
@@ -98,8 +105,7 @@ export default function Dashboard() {
   };
 
   // Week days for mini calendar (day view only)
-  const weekStart = moment(selectedDate).startOf('week');
-  const weekDays = Array.from({ length: 7 }, (_, i) => weekStart.clone().add(i, 'days'));
+  const weekDays = getWeekDays(selectedDate, settings.weekStartsOn, settings.showWeekends);
 
   return (
     <div className="min-h-screen bg-background no-scrollbar">
@@ -155,7 +161,7 @@ export default function Dashboard() {
             </Button>
 
             {viewMode === 'day' && (
-              <div className="flex-1 grid grid-cols-7 gap-1.5">
+              <div className="flex-1 grid gap-1.5" style={{ gridTemplateColumns: `repeat(${weekDays.length}, minmax(0, 1fr))` }}>
                 {weekDays.map(day => {
                   const dayStr = day.format('YYYY-MM-DD');
                   const dayActivities = activities.filter((a) => occursOnDate(a, dayStr));
@@ -237,6 +243,8 @@ export default function Dashboard() {
             categories={categories}
             onDayClick={(d) => { setSelectedDate(d); setViewMode('day'); }}
             onEdit={handleEdit}
+            weekStartsOn={settings.weekStartsOn}
+            showWeekends={settings.showWeekends}
           />
         )}
 
@@ -246,6 +254,7 @@ export default function Dashboard() {
             activities={activities}
             categories={categories}
             onDayClick={(d) => { setSelectedDate(d); setViewMode('day'); }}
+            weekStartsOn={settings.weekStartsOn}
           />
         )}
       </div>
