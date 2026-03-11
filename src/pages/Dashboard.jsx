@@ -8,7 +8,6 @@ import Timeline from '../components/calendar/Timeline';
 import WeekView from '../components/calendar/WeekView';
 import MonthView from '../components/calendar/MonthView';
 import AddEventDialog from '../components/calendar/AddEventDialog';
-import SmartSuggestion from '../components/calendar/SmartSuggestion';
 import DayStats from '../components/calendar/DayStats';
 import ReminderChecker from '../components/calendar/ReminderChecker';
 import { motion } from 'framer-motion';
@@ -90,10 +89,6 @@ export default function Dashboard() {
 
   const handleDelete = (activity) => {
     deleteMutation.mutate(activity.id);
-  };
-
-  const handleAddSuggested = (data) => {
-    createMutation.mutate(data);
   };
 
   const navigate = (direction) => {
@@ -253,7 +248,6 @@ export default function Dashboard() {
             </div>
             <div className="space-y-4">
               <DayStats activities={todayActivities} />
-              <SmartSuggestion activities={todayActivities} categories={categories} selectedDate={selectedDate} onAddSuggested={handleAddSuggested} />
             </div>
           </div>
         )}

@@ -104,20 +104,6 @@ const entityApi = (key) => ({
   }
 });
 
-const parsePromptIntent = (prompt) => {
-  const text = prompt.toLowerCase();
-
-  if (text.includes('studio') || text.includes('leggere')) {
-    return [{ title: 'Sessione di studio', description: 'Blocco di studio concentrato.', start_time: '09:00', end_time: '10:30', priority: 'high' }];
-  }
-
-  if (text.includes('allen') || text.includes('palestra') || text.includes('sport')) {
-    return [{ title: 'Allenamento', description: 'Sessione di allenamento moderata.', start_time: '18:00', end_time: '19:00', priority: 'medium' }];
-  }
-
-  return [{ title: 'Blocco focus', description: 'Tempo dedicato alle attività prioritarie.', start_time: '10:00', end_time: '11:30', priority: 'medium' }];
-};
-
 export const appClient = {
   auth: {
     async me() {
@@ -141,9 +127,6 @@ export const appClient = {
   },
   integrations: {
     Core: {
-      async InvokeLLM({ prompt }) {
-        return { suggestions: parsePromptIntent(prompt) };
-      },
       async SendEmail(_payload) {
         return { success: true };
       }
