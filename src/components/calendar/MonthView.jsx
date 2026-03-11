@@ -3,19 +3,20 @@ import moment from 'moment';
 import { getCategoryColors } from './CategoryBadge';
 import { Repeat } from 'lucide-react';
 import { occursOnDate } from '@/lib/activityUtils';
+import { getWeekdayLabels } from '@/lib/dateUtils';
 
 function getActivitiesForDay(activities, dateStr) {
   return activities.filter((a) => occursOnDate(a, dateStr));
 }
 
-const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
 
-export default function MonthView({ selectedDate, activities, categories, onDayClick }) {
+export default function MonthView({ selectedDate, activities, categories, onDayClick, weekStartsOn = 'monday' }) {
   const monthStart = moment(selectedDate).startOf('month');
   const monthEnd = moment(selectedDate).endOf('month');
-  const calStart = monthStart.clone().startOf('week');
-  const calEnd = monthEnd.clone().endOf('week');
+  const calStart = weekStartsOn === 'monday' ? monthStart.clone().startOf('isoWeek') : monthStart.clone().startOf('week');
+  const calEnd = weekStartsOn === 'monday' ? monthEnd.clone().endOf('isoWeek') : monthEnd.clone().endOf('week');
   const today = moment().format('YYYY-MM-DD');
+  const dayNames = getWeekdayLabels(weekStartsOn, true);
 
   const getCategoryById = (id) => categories.find(c => c.id === id);
 
@@ -32,7 +33,7 @@ export default function MonthView({ selectedDate, activities, categories, onDayC
     <div className="bg-card rounded-2xl border overflow-hidden">
       {/* Day headers */}
       <div className="grid grid-cols-7 border-b">
-        {DAY_NAMES.map(d => (
+        {dayNames.map(d => (
           <div key={d} className="py-2 text-center text-xs font-semibold text-muted-foreground">
             {d}
           </div>
