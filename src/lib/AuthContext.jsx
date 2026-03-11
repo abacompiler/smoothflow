@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       setUser(null);
       setIsAuthenticated(false);
-      setAuthError({ type: 'unknown', message: error.message || 'Failed to load user' });
+      setAuthError({ type: 'unknown', message: error.message || 'Impossibile caricare l\'utente' });
     } finally {
       setIsLoadingAuth(false);
     }
