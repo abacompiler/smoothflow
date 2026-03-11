@@ -10,12 +10,37 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select';
 import { CalendarIcon, Clock, Bell, Repeat } from 'lucide-react';
+import moment from 'moment';
+import { toMinutes } from '@/lib/activityUtils';
 
 const RECURRENCE_LABELS = {
   none: 'Una tantum',
   daily: 'Ogni giorno',
   weekly: 'Ogni settimana',
   monthly: 'Ogni mese'
+};
+
+const TIME_OPTIONS = Array.from({ length: 96 }, (_, idx) => {
+  const hour = String(Math.floor(idx / 4)).padStart(2, '0');
+  const minute = String((idx % 4) * 15).padStart(2, '0');
+  return `${hour}:${minute}`;
+});
+
+const getRoundedQuarterDefaults = () => {
+  const roundedStart = moment().seconds(0).milliseconds(0);
+  const remainder = roundedStart.minute() % 15;
+
+  if (remainder !== 0) {
+    roundedStart.add(15 - remainder, 'minutes');
+  }
+
+  const roundedEnd = roundedStart.clone().add(1, 'hour');
+
+  return {
+    start_time: roundedStart.format('HH:mm'),
+    end_time: roundedEnd.format('HH:mm'),
+    ends_next_day: roundedEnd.isAfter(roundedStart, 'day')
+  };
 };
 
 export default function AddEventDialog({ open, onOpenChange, onSave, categories, editingActivity, selectedDate }) {
@@ -29,8 +54,10 @@ export default function AddEventDialog({ open, onOpenChange, onSave, categories,
     reminder_minutes: 15,
     priority: 'medium',
     recurrence: 'none',
-    recurrence_end_date: ''
+    recurrence_end_date: '',
+    ends_next_day: false
   });
+  const [timeError, setTimeError] = useState('');
 
   useEffect(() => {
     if (editingActivity) {
@@ -44,30 +71,49 @@ export default function AddEventDialog({ open, onOpenChange, onSave, categories,
         reminder_minutes: editingActivity.reminder_minutes ?? 15,
         priority: editingActivity.priority || 'medium',
         recurrence: editingActivity.recurrence || 'none',
-        recurrence_end_date: editingActivity.recurrence_end_date || ''
+        recurrence_end_date: editingActivity.recurrence_end_date || '',
+        ends_next_day: Boolean(editingActivity.end_date && moment(editingActivity.end_date).isAfter(moment(editingActivity.date), 'day'))
       });
     } else {
+      const defaults = getRoundedQuarterDefaults();
+
       setForm({
         title: '',
         description: '',
         date: selectedDate || '',
-        start_time: '09:00',
-        end_time: '10:00',
+        start_time: defaults.start_time,
+        end_time: defaults.end_time,
         category_id: '',
         reminder_minutes: 15,
         priority: 'medium',
         recurrence: 'none',
-        recurrence_end_date: ''
+        recurrence_end_date: '',
+        ends_next_day: defaults.ends_next_day
       });
     }
+    setTimeError('');
   }, [editingActivity, open, selectedDate]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const startMinutes = toMinutes(form.start_time);
+    const endMinutes = toMinutes(form.end_time);
+
+    if (!form.ends_next_day && endMinutes <= startMinutes) {
+      setTimeError('L\'orario di fine deve essere successivo all\'orario di inizio, oppure attiva "Termina il giorno successivo".');
+      return;
+    }
+
     const data = { ...form };
+
+    data.end_date = data.ends_next_day
+      ? moment(data.date).add(1, 'day').format('YYYY-MM-DD')
+      : data.date;
+
     if (data.recurrence === 'none') {
       data.recurrence_end_date = '';
     }
+
     onSave(data);
   };
 
@@ -114,23 +160,61 @@ export default function AddEventDialog({ open, onOpenChange, onSave, categories,
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-1"><Clock className="w-3 h-3" /> Inizio</Label>
-              <Input
-                type="time"
+              <Select
                 value={form.start_time}
-                onChange={e => setForm({ ...form, start_time: e.target.value })}
-                required
-              />
+                onValueChange={(value) => {
+                  setForm({ ...form, start_time: value });
+                  setTimeError('');
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleziona orario" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIME_OPTIONS.map((time) => (
+                    <SelectItem key={`start-${time}`} value={time}>{time}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-1"><Clock className="w-3 h-3" /> Fine</Label>
-              <Input
-                type="time"
+              <Select
                 value={form.end_time}
-                onChange={e => setForm({ ...form, end_time: e.target.value })}
-                required
-              />
+                onValueChange={(value) => {
+                  setForm({ ...form, end_time: value });
+                  setTimeError('');
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleziona orario" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIME_OPTIONS.map((time) => (
+                    <SelectItem key={`end-${time}`} value={time}>{time}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              id="ends-next-day"
+              type="checkbox"
+              checked={form.ends_next_day}
+              onChange={(e) => {
+                setForm({ ...form, ends_next_day: e.target.checked });
+                setTimeError('');
+              }}
+              className="h-4 w-4 rounded border-input"
+            />
+            <Label htmlFor="ends-next-day" className="text-sm">Termina il giorno successivo</Label>
+          </div>
+
+          {timeError && (
+            <p className="text-sm text-destructive">{timeError}</p>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">

@@ -8,10 +8,10 @@ import Timeline from '../components/calendar/Timeline';
 import WeekView from '../components/calendar/WeekView';
 import MonthView from '../components/calendar/MonthView';
 import AddEventDialog from '../components/calendar/AddEventDialog';
-import SmartSuggestion from '../components/calendar/SmartSuggestion';
 import DayStats from '../components/calendar/DayStats';
 import ReminderChecker from '../components/calendar/ReminderChecker';
 import { motion } from 'framer-motion';
+import { occursOnDate } from '@/lib/activityUtils';
 
 export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(moment().format('YYYY-MM-DD'));
@@ -31,26 +31,7 @@ export default function Dashboard() {
   });
 
   // Calcola le attività del giorno selezionato, incluse le ricorrenti
-  const todayActivities = activities.filter(a => {
-    if (!a.date) return false;
-    const actStart = moment(a.date);
-    const selected = moment(selectedDate);
-
-    // Attività esatta (non ricorrente o data di partenza)
-    if (a.date === selectedDate) return true;
-    if (!a.recurrence || a.recurrence === 'none') return false;
-
-    // La data selezionata deve essere >= data di inizio
-    if (selected.isBefore(actStart)) return false;
-
-    // Controlla data fine ricorrenza
-    if (a.recurrence_end_date && selected.isAfter(moment(a.recurrence_end_date))) return false;
-
-    if (a.recurrence === 'daily') return true;
-    if (a.recurrence === 'weekly') return selected.day() === actStart.day();
-    if (a.recurrence === 'monthly') return selected.date() === actStart.date();
-    return false;
-  });
+  const todayActivities = activities.filter((a) => occursOnDate(a, selectedDate));
 
   const createMutation = useMutation({
     mutationFn: (data) => apiClient.activities.create(data),
@@ -92,10 +73,6 @@ export default function Dashboard() {
     deleteMutation.mutate(activity.id);
   };
 
-  const handleAddSuggested = (data) => {
-    createMutation.mutate(data);
-  };
-
   const navigate = (direction) => {
     const unit = viewMode === 'day' ? 'days' : viewMode === 'week' ? 'weeks' : 'months';
     setSelectedDate(moment(selectedDate).add(direction, unit).format('YYYY-MM-DD'));
@@ -125,7 +102,7 @@ export default function Dashboard() {
   const weekDays = Array.from({ length: 7 }, (_, i) => weekStart.clone().add(i, 'days'));
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background no-scrollbar">
       <ReminderChecker activities={activities} />
       
       <div className="max-w-6xl mx-auto p-4 md:p-6 lg:p-8">
@@ -135,23 +112,23 @@ export default function Dashboard() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="flex items-center justify-between mb-6">
-            <div>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 mb-6">
+            <div className="min-w-0">
               <h1 className="text-2xl md:text-3xl font-bold tracking-tight capitalize">
                 {getHeaderLabel()}
               </h1>
-              {getSubLabel() && (
-                <p className="text-muted-foreground mt-1">{getSubLabel()}</p>
-              )}
+              <p className={`text-muted-foreground mt-1 min-h-5 ${getSubLabel() ? '' : 'invisible'}`}>
+                {getSubLabel() || 'spazio riservato'}
+              </p>
             </div>
-            <div className="flex items-center gap-2 flex-wrap justify-end">
+            <div className="flex items-center gap-2 justify-end self-start">
               {/* View mode switcher */}
-              <div className="flex rounded-lg border overflow-hidden">
+              <div className="grid grid-cols-3 w-[240px] rounded-lg border overflow-hidden flex-shrink-0">
                 {['day', 'week', 'month'].map(mode => (
                   <button
                     key={mode}
                     onClick={() => setViewMode(mode)}
-                    className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                    className={`h-8 text-xs font-medium transition-colors text-center ${
                       viewMode === mode
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-card text-muted-foreground hover:bg-muted'
@@ -181,19 +158,7 @@ export default function Dashboard() {
               <div className="flex-1 grid grid-cols-7 gap-1.5">
                 {weekDays.map(day => {
                   const dayStr = day.format('YYYY-MM-DD');
-                  const dayActivities = activities.filter(a => {
-                    if (!a.date) return false;
-                    const actStart = moment(a.date);
-                    const d = moment(dayStr);
-                    if (a.date === dayStr) return true;
-                    if (!a.recurrence || a.recurrence === 'none') return false;
-                    if (d.isBefore(actStart)) return false;
-                    if (a.recurrence_end_date && d.isAfter(moment(a.recurrence_end_date))) return false;
-                    if (a.recurrence === 'daily') return true;
-                    if (a.recurrence === 'weekly') return d.day() === actStart.day();
-                    if (a.recurrence === 'monthly') return d.date() === actStart.date();
-                    return false;
-                  });
+                  const dayActivities = activities.filter((a) => occursOnDate(a, dayStr));
                   const isSelected = dayStr === selectedDate;
                   const isDayToday = dayStr === moment().format('YYYY-MM-DD');
                   return (
@@ -247,13 +212,18 @@ export default function Dashboard() {
                     </Button>
                   </div>
                 ) : (
-                  <Timeline activities={todayActivities} categories={categories} onEdit={handleEdit} onDelete={handleDelete} />
+                  <Timeline
+                    activities={todayActivities}
+                    categories={categories}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    selectedDate={selectedDate}
+                  />
                 )}
               </div>
             </div>
             <div className="space-y-4">
               <DayStats activities={todayActivities} />
-              <SmartSuggestion activities={todayActivities} categories={categories} selectedDate={selectedDate} onAddSuggested={handleAddSuggested} />
             </div>
           </div>
         )}

@@ -2,23 +2,12 @@ import React from 'react';
 import moment from 'moment';
 import { getCategoryColors } from './CategoryBadge';
 import { Repeat } from 'lucide-react';
+import { occursOnDate } from '@/lib/activityUtils';
 
 const HOURS = Array.from({ length: 17 }, (_, i) => i + 6); // 6:00 - 22:00
 
 function getActivitiesForDay(activities, dateStr) {
-  return activities.filter(a => {
-    if (!a.date) return false;
-    const actStart = moment(a.date);
-    const day = moment(dateStr);
-    if (a.date === dateStr) return true;
-    if (!a.recurrence || a.recurrence === 'none') return false;
-    if (day.isBefore(actStart)) return false;
-    if (a.recurrence_end_date && day.isAfter(moment(a.recurrence_end_date))) return false;
-    if (a.recurrence === 'daily') return true;
-    if (a.recurrence === 'weekly') return day.day() === actStart.day();
-    if (a.recurrence === 'monthly') return day.date() === actStart.date();
-    return false;
-  });
+  return activities.filter((a) => occursOnDate(a, dateStr));
 }
 
 export default function WeekView({ selectedDate, activities, categories, onDayClick, onEdit }) {
@@ -57,7 +46,7 @@ export default function WeekView({ selectedDate, activities, categories, onDayCl
       </div>
 
       {/* Time grid */}
-      <div className="overflow-y-auto max-h-[600px]">
+      <div className="overflow-y-auto max-h-[600px] no-scrollbar">
         {HOURS.map(hour => (
           <div key={hour} className="grid grid-cols-8 min-h-[56px] border-b last:border-0">
             <div className="px-2 pt-1 text-[10px] font-medium text-muted-foreground text-right border-r">
