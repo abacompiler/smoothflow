@@ -8,7 +8,6 @@ import Timeline from '../components/calendar/Timeline';
 import WeekView from '../components/calendar/WeekView';
 import MonthView from '../components/calendar/MonthView';
 import AddEventDialog from '../components/calendar/AddEventDialog';
-import SmartSuggestion from '../components/calendar/SmartSuggestion';
 import DayStats from '../components/calendar/DayStats';
 import ReminderChecker from '../components/calendar/ReminderChecker';
 import { motion } from 'framer-motion';
@@ -92,10 +91,6 @@ export default function Dashboard() {
     deleteMutation.mutate(activity.id);
   };
 
-  const handleAddSuggested = (data) => {
-    createMutation.mutate(data);
-  };
-
   const navigate = (direction) => {
     const unit = viewMode === 'day' ? 'days' : viewMode === 'week' ? 'weeks' : 'months';
     setSelectedDate(moment(selectedDate).add(direction, unit).format('YYYY-MM-DD'));
@@ -146,12 +141,12 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center gap-2 flex-wrap justify-end">
               {/* View mode switcher */}
-              <div className="flex rounded-lg border overflow-hidden">
+              <div className="grid grid-cols-3 w-[240px] rounded-lg border overflow-hidden flex-shrink-0">
                 {['day', 'week', 'month'].map(mode => (
                   <button
                     key={mode}
                     onClick={() => setViewMode(mode)}
-                    className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                    className={`h-8 text-xs font-medium transition-colors text-center ${
                       viewMode === mode
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-card text-muted-foreground hover:bg-muted'
@@ -253,7 +248,6 @@ export default function Dashboard() {
             </div>
             <div className="space-y-4">
               <DayStats activities={todayActivities} />
-              <SmartSuggestion activities={todayActivities} categories={categories} selectedDate={selectedDate} onAddSuggested={handleAddSuggested} />
             </div>
           </div>
         )}
