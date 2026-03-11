@@ -16,7 +16,7 @@ export default function EventCard({ activity, category, onEdit, onDelete }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
-      className={`group relative rounded-xl border ${colors.border} ${colors.bg} p-4 transition-all hover:shadow-md`}
+      className={`group relative h-full overflow-hidden rounded-xl border ${colors.border} ${colors.bg} p-3 transition-all hover:shadow-md`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
