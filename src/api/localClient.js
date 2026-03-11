@@ -4,8 +4,36 @@ const STORAGE_KEYS = {
   user: 'app_user'
 };
 
-const readCollection = (key) => {
-  const raw = localStorage.getItem(key);
+const desktopStorage = () => window['smoothflowDesktop']?.storage;
+
+const getStorageItem = async (key) => {
+  const storage = desktopStorage();
+  if (storage) {
+    return storage.get(key);
+  }
+  return localStorage.getItem(key);
+};
+
+const setStorageItem = async (key, value) => {
+  const storage = desktopStorage();
+  if (storage) {
+    await storage.set(key, value);
+    return;
+  }
+  localStorage.setItem(key, value);
+};
+
+const removeStorageItem = async (key) => {
+  const storage = desktopStorage();
+  if (storage) {
+    await storage.remove(key);
+    return;
+  }
+  localStorage.removeItem(key);
+};
+
+const readCollection = async (key) => {
+  const raw = await getStorageItem(key);
   if (!raw) return [];
 
   try {
@@ -16,59 +44,62 @@ const readCollection = (key) => {
   }
 };
 
-const writeCollection = (key, data) => {
-  localStorage.setItem(key, JSON.stringify(data));
+const writeCollection = async (key, data) => {
+  await setStorageItem(key, JSON.stringify(data));
 };
 
 const makeId = () => crypto.randomUUID?.() ?? `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
-const ensureSeedData = () => {
-  if (!localStorage.getItem(STORAGE_KEYS.user)) {
-    localStorage.setItem(STORAGE_KEYS.user, JSON.stringify({
-      id: 'local-user',
-      email: 'local@example.com',
-      role: 'admin',
-      name: 'Local User'
-    }));
+const ensureSeedData = async () => {
+  if (!(await getStorageItem(STORAGE_KEYS.user))) {
+    await setStorageItem(
+      STORAGE_KEYS.user,
+      JSON.stringify({
+        id: 'local-user',
+        email: 'local@example.com',
+        role: 'admin',
+        name: 'Local User'
+      })
+    );
   }
 
-  if (!localStorage.getItem(STORAGE_KEYS.categories)) {
-    writeCollection(STORAGE_KEYS.categories, [
+  if (!(await getStorageItem(STORAGE_KEYS.categories))) {
+    await writeCollection(STORAGE_KEYS.categories, [
       { id: makeId(), name: 'Lavoro', color: '#3b82f6' },
       { id: makeId(), name: 'Personale', color: '#22c55e' }
     ]);
   }
 
-  if (!localStorage.getItem(STORAGE_KEYS.activities)) {
-    writeCollection(STORAGE_KEYS.activities, []);
+  if (!(await getStorageItem(STORAGE_KEYS.activities))) {
+    await writeCollection(STORAGE_KEYS.activities, []);
   }
 };
 
 const entityApi = (key) => ({
   async list() {
-    ensureSeedData();
+    await ensureSeedData();
     return readCollection(key);
   },
   async create(payload) {
-    ensureSeedData();
+    await ensureSeedData();
     const item = { id: makeId(), ...payload };
-    const items = readCollection(key);
+    const items = await readCollection(key);
     items.push(item);
-    writeCollection(key, items);
+    await writeCollection(key, items);
     return item;
   },
   async update(id, payload) {
-    ensureSeedData();
-    const items = readCollection(key);
+    await ensureSeedData();
+    const items = await readCollection(key);
     const updatedItems = items.map((item) => (item.id === id ? { ...item, ...payload } : item));
     const updated = updatedItems.find((item) => item.id === id);
-    writeCollection(key, updatedItems);
+    await writeCollection(key, updatedItems);
     return updated;
   },
   async delete(id) {
-    ensureSeedData();
-    const items = readCollection(key);
-    writeCollection(key, items.filter((item) => item.id !== id));
+    await ensureSeedData();
+    const items = await readCollection(key);
+    await writeCollection(key, items.filter((item) => item.id !== id));
     return { success: true };
   }
 });
@@ -90,10 +121,12 @@ const parsePromptIntent = (prompt) => {
 export const appClient = {
   auth: {
     async me() {
-      ensureSeedData();
-      return JSON.parse(localStorage.getItem(STORAGE_KEYS.user));
+      await ensureSeedData();
+      const rawUser = await getStorageItem(STORAGE_KEYS.user);
+      return rawUser ? JSON.parse(rawUser) : null;
     },
-    logout(redirectUrl) {
+    async logout(redirectUrl) {
+      await removeStorageItem(STORAGE_KEYS.user);
       if (redirectUrl) {
         window.location.href = redirectUrl;
       }
