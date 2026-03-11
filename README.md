@@ -1,39 +1,28 @@
-**Welcome to your Base44 project** 
+# Smoothflow
 
-**About**
+Day planning web app built with React + Vite.
 
-View and Edit  your app on [Base44.com](http://Base44.com) 
+## Run locally
 
-This project contains everything you need to run your app locally.
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Start dev server:
+   ```bash
+   npm run dev
+   ```
 
-**Edit the code in your local development environment**
+No Base44 configuration is required anymore. The app runs in standalone mode and stores data in the browser `localStorage`.
 
-Any change pushed to the repo will also be reflected in the Base44 Builder.
+## Available scripts
 
-**Prerequisites:** 
+- `npm run dev` – start development server
+- `npm run build` – create production build
+- `npm run preview` – preview production build
+- `npm run lint` – run ESLint
+- `npm run typecheck` – run TypeScript checks (if applicable)
 
-1. Clone the repository using the project's Git URL 
-2. Navigate to the project directory
-3. Install dependencies: `npm install`
-4. Create an `.env.local` file and set the right environment variables
+## Standalone migration notes
 
-```
-VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=your_backend_url
-
-e.g.
-VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
-VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
-```
-
-Run the app: `npm run dev`
-
-**Publish your changes**
-
-Open [Base44.com](http://Base44.com) and click on Publish.
-
-**Docs & Support**
-
-Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
-
-Support: [https://app.base44.com/support](https://app.base44.com/support)
+See [`docs/base44-exit-plan.md`](docs/base44-exit-plan.md) for the architecture/migration rationale.

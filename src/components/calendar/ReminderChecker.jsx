@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { appClient } from '@/api/localClient';
 import { toast } from 'sonner';
 import moment from 'moment';
 
@@ -24,9 +24,9 @@ export default function ReminderChecker({ activities }) {
             duration: 10000,
           });
 
-          const user = await base44.auth.me();
+          const user = await appClient.auth.me();
           if (user?.email) {
-            await base44.integrations.Core.SendEmail({
+            await appClient.integrations.Core.SendEmail({
               to: user.email,
               subject: `⏰ Reminder: ${activity.title}`,
               body: `<h2>Promemoria</h2>
@@ -37,7 +37,7 @@ export default function ReminderChecker({ activities }) {
             });
           }
 
-          await base44.entities.Activity.update(activity.id, { reminder_sent: true });
+          await appClient.entities.Activity.update(activity.id, { reminder_sent: true });
         }
       }
     };

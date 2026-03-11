@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Sparkles, Loader2, Plus } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { appClient } from '@/api/localClient';
 import { Card } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -23,7 +23,7 @@ export default function SmartSuggestion({ activities, categories, selectedDate, 
 
     const categoryNames = categories.map(c => c.name).join(', ');
 
-    const result = await base44.integrations.Core.InvokeLLM({
+    const result = await appClient.integrations.Core.InvokeLLM({
       prompt: `Sei un assistente per la pianificazione della giornata. 
 L'utente vuole organizzare la sua giornata del ${selectedDate}.
 
