@@ -120,7 +120,7 @@ export default function Dashboard() {
   const weekDays = Array.from({ length: 7 }, (_, i) => weekStart.clone().add(i, 'days'));
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background no-scrollbar">
       <ReminderChecker activities={activities} />
       
       <div className="max-w-6xl mx-auto p-4 md:p-6 lg:p-8">
