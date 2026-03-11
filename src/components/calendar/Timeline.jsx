@@ -124,7 +124,7 @@ export default function Timeline({ activities, categories, onEdit, onDelete, sel
           <div className="w-16 flex-shrink-0 text-xs font-medium text-muted-foreground pt-0.5 text-right pr-4">
             {String(hour).padStart(2, '0')}:00
           </div>
-          <div className="flex-1 border-t border-border/50 group-hover:border-border transition-colors min-h-[80px]" />
+          <div className="flex-1 border-t border-border/80 group-hover:border-border transition-colors min-h-[80px]" />
         </div>
       ))}
 
