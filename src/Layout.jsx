@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { CalendarDays, Tag, Menu, X, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { appClient } from '@/api/localClient';
+import { apiClient } from '@/api/client';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const navItems = [
@@ -48,7 +48,7 @@ export default function Layout({ children, currentPageName }) {
             variant="ghost"
             size="sm"
             className="w-full justify-start text-muted-foreground"
-            onClick={() => appClient.auth.logout()}
+            onClick={() => apiClient.auth.logout()}
           >
             <LogOut className="w-4 h-4 mr-2" />
             Esci

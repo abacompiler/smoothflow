@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { appClient } from '@/api/localClient';
+import { apiClient } from '@/api/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -14,11 +14,11 @@ export default function Categories() {
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
-    queryFn: () => appClient.entities.Category.list()
+    queryFn: () => apiClient.categories.list()
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => appClient.entities.Category.create(data),
+    mutationFn: (data) => apiClient.categories.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setDialogOpen(false);
@@ -26,7 +26,7 @@ export default function Categories() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => appClient.entities.Category.update(id, data),
+    mutationFn: ({ id, data }) => apiClient.categories.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setDialogOpen(false);
@@ -35,7 +35,7 @@ export default function Categories() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => appClient.entities.Category.delete(id),
+    mutationFn: (id) => apiClient.categories.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categories'] })
   });
 

@@ -98,7 +98,7 @@ export const appClient = {
         window.location.href = redirectUrl;
       }
     },
-    redirectToLogin() {
+    redirectToLogin(_redirectUrl) {
       // No-op in standalone local mode.
     }
   },
@@ -111,7 +111,7 @@ export const appClient = {
       async InvokeLLM({ prompt }) {
         return { suggestions: parsePromptIntent(prompt) };
       },
-      async SendEmail() {
+      async SendEmail(_payload) {
         return { success: true };
       }
     }

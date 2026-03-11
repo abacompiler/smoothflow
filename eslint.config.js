@@ -55,6 +55,12 @@ export default [
         { ignore: ["cmdk-input-wrapper", "toast-close"] },
       ],
       "react-hooks/rules-of-hooks": "error",
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: ["@base44/*", "@/api/base44Client", "@/lib/app-params"]
+        }
+      ],
     },
   },
 ];

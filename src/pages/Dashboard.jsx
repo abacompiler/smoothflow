@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { appClient } from '@/api/localClient';
+import { apiClient } from '@/api/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -22,12 +22,12 @@ export default function Dashboard() {
 
   const { data: activities = [] } = useQuery({
     queryKey: ['activities'],
-    queryFn: () => appClient.entities.Activity.list()
+    queryFn: () => apiClient.activities.list()
   });
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
-    queryFn: () => appClient.entities.Category.list()
+    queryFn: () => apiClient.categories.list()
   });
 
   // Calcola le attività del giorno selezionato, incluse le ricorrenti
@@ -53,7 +53,7 @@ export default function Dashboard() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => appClient.entities.Activity.create(data),
+    mutationFn: (data) => apiClient.activities.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activities'] });
       setDialogOpen(false);
@@ -62,7 +62,7 @@ export default function Dashboard() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => appClient.entities.Activity.update(id, data),
+    mutationFn: ({ id, data }) => apiClient.activities.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activities'] });
       setDialogOpen(false);
@@ -71,7 +71,7 @@ export default function Dashboard() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => appClient.entities.Activity.delete(id),
+    mutationFn: (id) => apiClient.activities.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['activities'] })
   });
 

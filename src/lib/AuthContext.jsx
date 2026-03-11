@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { appClient } from '@/api/localClient';
+import { apiClient } from '@/api/client';
 
 const AuthContext = createContext();
 
@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
   const checkUserAuth = async () => {
     setIsLoadingAuth(true);
     try {
-      const currentUser = await appClient.auth.me();
+      const currentUser = await apiClient.auth.me();
       setUser(currentUser);
       setIsAuthenticated(Boolean(currentUser));
       setAuthError(null);
@@ -34,11 +34,11 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
-    appClient.auth.logout(window.location.href);
+    apiClient.auth.logout(window.location.href);
   };
 
   const navigateToLogin = () => {
-    appClient.auth.redirectToLogin(window.location.href);
+    apiClient.auth.redirectToLogin(window.location.href);
   };
 
   return (

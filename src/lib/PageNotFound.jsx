@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import { appClient } from '@/api/localClient';
+import { apiClient } from '@/api/client';
 import { useQuery } from '@tanstack/react-query';
 
 
@@ -11,7 +11,7 @@ export default function PageNotFound({}) {
         queryKey: ['user'],
         queryFn: async () => {
             try {
-                const user = await appClient.auth.me();
+                const user = await apiClient.auth.me();
                 return { user, isAuthenticated: true };
             } catch (error) {
                 return { user: null, isAuthenticated: false };

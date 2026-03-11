@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { appClient } from '@/api/localClient';
 import { toast } from 'sonner';
 import moment from 'moment';
+import { markReminderAsSent, sendActivityReminder } from '@/services/reminders';
 
 export default function ReminderChecker({ activities }) {
   const sentReminders = useRef(new Set());
@@ -24,20 +24,8 @@ export default function ReminderChecker({ activities }) {
             duration: 10000,
           });
 
-          const user = await appClient.auth.me();
-          if (user?.email) {
-            await appClient.integrations.Core.SendEmail({
-              to: user.email,
-              subject: `⏰ Reminder: ${activity.title}`,
-              body: `<h2>Promemoria</h2>
-                <p>L'attività <strong>${activity.title}</strong> inizierà tra ${activity.reminder_minutes} minuti.</p>
-                <p><strong>Orario:</strong> ${activity.start_time} - ${activity.end_time}</p>
-                ${activity.description ? `<p><strong>Descrizione:</strong> ${activity.description}</p>` : ''}
-                <p>Buon lavoro!</p>`
-            });
-          }
-
-          await appClient.entities.Activity.update(activity.id, { reminder_sent: true });
+          await sendActivityReminder({ activity });
+          await markReminderAsSent(activity.id);
         }
       }
     };

@@ -157,8 +157,8 @@ npm uninstall @base44/sdk @base44/vite-plugin
 5. Remove plugin/deps and update env/docs.
 
 ## Acceptance checklist for “Base44-free” status
-- [ ] `rg -n "@base44|base44\." src vite.config.js package.json` returns no matches.
-- [ ] App boots with only app-owned env vars.
+- [x] `rg -n "@base44|base44\." src vite.config.js package.json` returns no matches.
+- [x] App boots with only app-owned env vars.
 - [ ] Login/logout + CRUD + reminders/suggestions work against your backend.
 - [ ] CI lint/typecheck/build pass.
 
