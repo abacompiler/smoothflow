@@ -5,30 +5,50 @@ import { Repeat } from 'lucide-react';
 import { endsNextDay, occursOnDate, startsOnDate, toMinutes } from '@/lib/activityUtils';
 import { getWeekDays } from '@/lib/dateUtils';
 
-const START_HOUR = 0;
-const END_HOUR = 24;
+const DEFAULT_START_HOUR = 7;
+const DEFAULT_END_HOUR = 23;
+const MIN_HOUR = 0;
+const MAX_HOUR = 24;
 const HOUR_HEIGHT = 56;
-const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => i + START_HOUR);
 const EVENT_GAP_PX = 4;
 
-function getVisibleRange(activity, dateStr) {
+function getEventBounds(activity, dateStr) {
   const overnight = endsNextDay(activity);
   const isStartingToday = startsOnDate(activity, dateStr);
 
-  let startMinutes = isStartingToday ? toMinutes(activity.start_time) : 0;
-  let endMinutes = isStartingToday
+  const startMinutes = isStartingToday ? toMinutes(activity.start_time) : 0;
+  const endMinutes = isStartingToday
     ? (overnight ? (24 * 60) + toMinutes(activity.end_time) : toMinutes(activity.end_time))
     : toMinutes(activity.end_time);
 
-  const windowStart = START_HOUR * 60;
-  const windowEnd = END_HOUR * 60;
+  return {
+    startMinutes: Math.max(MIN_HOUR * 60, startMinutes),
+    endMinutes: Math.min(MAX_HOUR * 60, endMinutes)
+  };
+}
 
-  startMinutes = Math.max(startMinutes, windowStart);
-  endMinutes = Math.min(endMinutes, windowEnd);
+function getTimeWindow(activities, weekDays) {
+  let minHour = DEFAULT_START_HOUR;
+  let maxHour = DEFAULT_END_HOUR;
 
-  if (endMinutes <= startMinutes) return null;
+  weekDays.forEach((day) => {
+    const dayStr = day.format('YYYY-MM-DD');
 
-  return { startMinutes, endMinutes };
+    activities
+      .filter((activity) => occursOnDate(activity, dayStr))
+      .forEach((activity) => {
+        const { startMinutes, endMinutes } = getEventBounds(activity, dayStr);
+        if (endMinutes <= startMinutes) return;
+
+        minHour = Math.min(minHour, Math.floor(startMinutes / 60));
+        maxHour = Math.max(maxHour, Math.ceil(endMinutes / 60));
+      });
+  });
+
+  return {
+    startHour: Math.max(MIN_HOUR, minHour),
+    endHour: Math.min(MAX_HOUR, maxHour)
+  };
 }
 
 function buildColumns(events) {
@@ -90,8 +110,10 @@ function buildColumns(events) {
 
 export default function WeekView({ selectedDate, activities, categories, onDayClick, onEdit, weekStartsOn = 'monday', showWeekends = true }) {
   const weekDays = getWeekDays(selectedDate, weekStartsOn, showWeekends);
+  const { startHour, endHour } = getTimeWindow(activities, weekDays);
+  const hours = Array.from({ length: endHour - startHour + 1 }, (_, i) => i + startHour);
   const today = moment().format('YYYY-MM-DD');
-  const totalHeight = HOURS.length * HOUR_HEIGHT;
+  const totalHeight = (endHour - startHour) * HOUR_HEIGHT;
 
   const getCategoryById = (id) => categories.find((c) => c.id === id);
 
@@ -101,13 +123,19 @@ export default function WeekView({ selectedDate, activities, categories, onDayCl
     const dayEvents = activities
       .filter((activity) => occursOnDate(activity, dayStr))
       .map((activity) => {
-        const range = getVisibleRange(activity, dayStr);
-        if (!range) return null;
+        const range = getEventBounds(activity, dayStr);
+        const windowStart = startHour * 60;
+        const windowEnd = endHour * 60;
+
+        const clampedStart = Math.max(range.startMinutes, windowStart);
+        const clampedEnd = Math.min(range.endMinutes, windowEnd);
+
+        if (clampedEnd <= clampedStart) return null;
 
         return {
           activity,
-          startMinutes: range.startMinutes,
-          endMinutes: range.endMinutes
+          startMinutes: clampedStart,
+          endMinutes: clampedEnd
         };
       })
       .filter(Boolean)
@@ -117,7 +145,7 @@ export default function WeekView({ selectedDate, activities, categories, onDayCl
       });
 
     return buildColumns(dayEvents).map((event) => {
-      const top = ((event.startMinutes - START_HOUR * 60) / 60) * HOUR_HEIGHT;
+      const top = ((event.startMinutes - startHour * 60) / 60) * HOUR_HEIGHT;
       const height = Math.max(((event.endMinutes - event.startMinutes) / 60) * HOUR_HEIGHT, 24);
 
       const dayWidth = 100 / weekDays.length;
@@ -164,7 +192,7 @@ export default function WeekView({ selectedDate, activities, categories, onDayCl
 
       {/* Time grid */}
       <div className="overflow-y-auto max-h-[600px] no-scrollbar relative">
-        {HOURS.map((hour) => (
+        {hours.map((hour) => (
           <div key={hour} className="grid min-h-[56px] border-b last:border-0" style={{ gridTemplateColumns: `repeat(${weekDays.length + 1}, minmax(0, 1fr))` }}>
             <div className="px-2 pt-1 text-[10px] font-medium text-muted-foreground text-right border-r">
               {String(hour).padStart(2, '0')}:00
