@@ -3,8 +3,8 @@ import EventCard from './EventCard';
 import { AnimatePresence } from 'framer-motion';
 import { endsNextDay, startsOnDate, toMinutes } from '@/lib/activityUtils';
 
-const START_HOUR = 6;
-const END_HOUR = 22;
+const START_HOUR = 0;
+const END_HOUR = 24;
 const HOUR_HEIGHT = 80;
 const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60;
 
