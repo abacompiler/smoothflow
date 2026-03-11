@@ -20,6 +20,12 @@ const RECURRENCE_LABELS = {
   monthly: 'Ogni mese'
 };
 
+const TIME_OPTIONS = Array.from({ length: 96 }, (_, idx) => {
+  const hour = String(Math.floor(idx / 4)).padStart(2, '0');
+  const minute = String((idx % 4) * 15).padStart(2, '0');
+  return `${hour}:${minute}`;
+});
+
 const getRoundedQuarterDefaults = () => {
   const roundedStart = moment().seconds(0).milliseconds(0);
   const remainder = roundedStart.minute() % 15;
@@ -154,29 +160,41 @@ export default function AddEventDialog({ open, onOpenChange, onSave, categories,
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-1"><Clock className="w-3 h-3" /> Inizio</Label>
-              <Input
-                type="time"
-                step={900}
+              <Select
                 value={form.start_time}
-                onChange={e => {
-                  setForm({ ...form, start_time: e.target.value });
+                onValueChange={(value) => {
+                  setForm({ ...form, start_time: value });
                   setTimeError('');
                 }}
-                required
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleziona orario" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIME_OPTIONS.map((time) => (
+                    <SelectItem key={`start-${time}`} value={time}>{time}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-1"><Clock className="w-3 h-3" /> Fine</Label>
-              <Input
-                type="time"
-                step={900}
+              <Select
                 value={form.end_time}
-                onChange={e => {
-                  setForm({ ...form, end_time: e.target.value });
+                onValueChange={(value) => {
+                  setForm({ ...form, end_time: value });
                   setTimeError('');
                 }}
-                required
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleziona orario" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIME_OPTIONS.map((time) => (
+                    <SelectItem key={`end-${time}`} value={time}>{time}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
