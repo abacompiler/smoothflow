@@ -2,7 +2,7 @@ import React from 'react';
 import moment from 'moment';
 import { getCategoryColors } from './CategoryBadge';
 import { Repeat } from 'lucide-react';
-import { endsNextDay, occursOnDate, toMinutes } from '@/lib/activityUtils';
+import { endsNextDay, occursOnDate, startsOnDate, toMinutes } from '@/lib/activityUtils';
 
 const START_HOUR = 6;
 const END_HOUR = 22;
@@ -13,7 +13,7 @@ const EVENT_GAP_PX = 4;
 
 function getVisibleRange(activity, dateStr) {
   const overnight = endsNextDay(activity);
-  const isStartingToday = activity.date === dateStr;
+  const isStartingToday = startsOnDate(activity, dateStr);
 
   let startMinutes = isStartingToday ? toMinutes(activity.start_time) : 0;
   let endMinutes = isStartingToday

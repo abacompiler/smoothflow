@@ -1,7 +1,7 @@
 import React from 'react';
 import EventCard from './EventCard';
 import { AnimatePresence } from 'framer-motion';
-import { endsNextDay, toMinutes } from '@/lib/activityUtils';
+import { endsNextDay, startsOnDate, toMinutes } from '@/lib/activityUtils';
 
 const START_HOUR = 6;
 const END_HOUR = 22;
@@ -12,7 +12,7 @@ const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => i + ST
 const EVENT_GAP_PX = 6;
 
 const getVisibleRange = (activity, selectedDate) => {
-  const isStartingToday = activity.date === selectedDate;
+  const isStartingToday = startsOnDate(activity, selectedDate);
   const overnight = endsNextDay(activity);
 
   let startMinutes = isStartingToday ? toMinutes(activity.start_time) : 0;
