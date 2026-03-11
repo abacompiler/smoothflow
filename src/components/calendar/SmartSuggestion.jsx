@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Sparkles, Loader2, Plus } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
 import { Card } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getSmartSuggestions } from '@/services/suggestions';
 
 export default function SmartSuggestion({ activities, categories, selectedDate, onAddSuggested }) {
   const [prompt, setPrompt] = useState('');
@@ -15,50 +15,14 @@ export default function SmartSuggestion({ activities, categories, selectedDate, 
     if (!prompt.trim()) return;
     setLoading(true);
 
-    const existingActivities = activities.map(a => ({
-      title: a.title,
-      start: a.start_time,
-      end: a.end_time
-    }));
-
-    const categoryNames = categories.map(c => c.name).join(', ');
-
-    const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `Sei un assistente per la pianificazione della giornata. 
-L'utente vuole organizzare la sua giornata del ${selectedDate}.
-
-Impegni già esistenti:
-${JSON.stringify(existingActivities)}
-
-Categorie disponibili: ${categoryNames || 'Nessuna'}
-
-L'utente chiede: "${prompt}"
-
-Suggerisci come suddividere il tempo rimanente della giornata (ore 6:00-22:00) considerando gli impegni esistenti. 
-Suggerisci slot di tempo realistici con pause appropriate.
-Per ogni suggerimento usa una delle categorie disponibili se pertinente, altrimenti lascia vuoto.`,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          suggestions: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                title: { type: "string" },
-                description: { type: "string" },
-                start_time: { type: "string" },
-                end_time: { type: "string" },
-                category_name: { type: "string" },
-                priority: { type: "string", enum: ["low", "medium", "high"] }
-              }
-            }
-          }
-        }
-      }
+    const nextSuggestions = await getSmartSuggestions({
+      activities,
+      categories,
+      selectedDate,
+      prompt
     });
 
-    setSuggestions(result.suggestions || []);
+    setSuggestions(nextSuggestions);
     setLoading(false);
   };
 
