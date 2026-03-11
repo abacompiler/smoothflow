@@ -198,7 +198,7 @@ export default function Dashboard() {
         {viewMode === 'day' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
-              <div className="bg-card rounded-2xl border p-4 md:p-6">
+              <div className="bg-card rounded-2xl border p-4 md:p-6 overflow-hidden">
                 {todayActivities.length === 0 ? (
                   <div className="text-center py-16">
                     <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
@@ -212,13 +212,15 @@ export default function Dashboard() {
                     </Button>
                   </div>
                 ) : (
-                  <Timeline
-                    activities={todayActivities}
-                    categories={categories}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    selectedDate={selectedDate}
-                  />
+                  <div className="max-h-[600px] overflow-y-auto no-scrollbar pr-1">
+                    <Timeline
+                      activities={todayActivities}
+                      categories={categories}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      selectedDate={selectedDate}
+                    />
+                  </div>
                 )}
               </div>
             </div>
