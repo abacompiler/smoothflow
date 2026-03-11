@@ -1,0 +1,22 @@
+{
+  "name": "Category",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome della categoria"
+    },
+    "color": {
+      "type": "string",
+      "description": "Colore della categoria in formato hex"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Nome icona dalla libreria"
+    }
+  },
+  "required": [
+    "name",
+    "color"
+  ]
+}
