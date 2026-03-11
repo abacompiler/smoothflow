@@ -58,6 +58,9 @@ function createWindow() {
   if (!app.isPackaged) {
     win.loadURL('http://localhost:5173');
     win.webContents.openDevTools({ mode: 'detach' });
+    win.webContents.on('did-fail-load', (_, code, desc, url) => {
+      console.error('did-fail-load', { code, desc, url });
+    });
     return;
   }
 
