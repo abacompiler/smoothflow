@@ -57,7 +57,7 @@ export default function WeekView({ selectedDate, activities, categories, onDayCl
       </div>
 
       {/* Time grid */}
-      <div className="overflow-y-auto max-h-[600px]">
+      <div className="overflow-y-auto max-h-[600px] no-scrollbar">
         {HOURS.map(hour => (
           <div key={hour} className="grid grid-cols-8 min-h-[56px] border-b last:border-0">
             <div className="px-2 pt-1 text-[10px] font-medium text-muted-foreground text-right border-r">
