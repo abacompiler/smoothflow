@@ -1,0 +1,76 @@
+{
+  "name": "Activity",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Titolo dell'attivit\u00e0"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descrizione dell'attivit\u00e0"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data di inizio dell'attivit\u00e0"
+    },
+    "start_time": {
+      "type": "string",
+      "description": "Ora di inizio (HH:mm)"
+    },
+    "end_time": {
+      "type": "string",
+      "description": "Ora di fine (HH:mm)"
+    },
+    "category_id": {
+      "type": "string",
+      "description": "ID della categoria associata"
+    },
+    "reminder_minutes": {
+      "type": "number",
+      "description": "Minuti prima dell'evento per il reminder"
+    },
+    "reminder_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se il reminder \u00e8 stato gi\u00e0 inviato"
+    },
+    "is_suggested": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se l'attivit\u00e0 \u00e8 stata suggerita dall'AI"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "medium"
+    },
+    "recurrence": {
+      "type": "string",
+      "enum": [
+        "none",
+        "daily",
+        "weekly",
+        "monthly"
+      ],
+      "default": "none",
+      "description": "Tipo di ricorrenza"
+    },
+    "recurrence_end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data di fine della ricorrenza (opzionale)"
+    }
+  },
+  "required": [
+    "title",
+    "date",
+    "start_time",
+    "end_time"
+  ]
+}
