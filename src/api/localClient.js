@@ -58,7 +58,7 @@ const ensureSeedData = async () => {
         id: 'local-user',
         email: 'local@example.com',
         role: 'admin',
-        name: 'Local User'
+        name: 'Utente locale'
       })
     );
   }

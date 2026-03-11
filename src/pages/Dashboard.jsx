@@ -130,16 +130,16 @@ export default function Dashboard() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="flex items-center justify-between mb-6">
-            <div>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 mb-6">
+            <div className="min-w-0">
               <h1 className="text-2xl md:text-3xl font-bold tracking-tight capitalize">
                 {getHeaderLabel()}
               </h1>
-              {getSubLabel() && (
-                <p className="text-muted-foreground mt-1">{getSubLabel()}</p>
-              )}
+              <p className={`text-muted-foreground mt-1 min-h-5 ${getSubLabel() ? '' : 'invisible'}`}>
+                {getSubLabel() || 'spazio riservato'}
+              </p>
             </div>
-            <div className="flex items-center gap-2 flex-wrap justify-end">
+            <div className="flex items-center gap-2 justify-end self-start">
               {/* View mode switcher */}
               <div className="grid grid-cols-3 w-[240px] rounded-lg border overflow-hidden flex-shrink-0">
                 {['day', 'week', 'month'].map(mode => (
