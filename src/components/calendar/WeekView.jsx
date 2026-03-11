@@ -5,8 +5,8 @@ import { Repeat } from 'lucide-react';
 import { endsNextDay, occursOnDate, startsOnDate, toMinutes } from '@/lib/activityUtils';
 import { getWeekDays } from '@/lib/dateUtils';
 
-const START_HOUR = 6;
-const END_HOUR = 22;
+const START_HOUR = 0;
+const END_HOUR = 24;
 const HOUR_HEIGHT = 56;
 const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => i + START_HOUR);
 const EVENT_GAP_PX = 4;
