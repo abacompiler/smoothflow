@@ -1,12 +1,9 @@
 import React from 'react';
 import { Clock, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { getActivityDurationMinutes } from '@/lib/activityUtils';
 
 export default function DayStats({ activities }) {
-  const totalMinutes = activities.reduce((sum, a) => {
-    const [sh, sm] = a.start_time.split(':').map(Number);
-    const [eh, em] = a.end_time.split(':').map(Number);
-    return sum + ((eh * 60 + em) - (sh * 60 + sm));
-  }, 0);
+  const totalMinutes = activities.reduce((sum, a) => sum + getActivityDurationMinutes(a), 0);
 
   const hours = Math.floor(totalMinutes / 60);
   const mins = totalMinutes % 60;

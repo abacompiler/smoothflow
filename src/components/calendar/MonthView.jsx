@@ -2,21 +2,10 @@ import React from 'react';
 import moment from 'moment';
 import { getCategoryColors } from './CategoryBadge';
 import { Repeat } from 'lucide-react';
+import { occursOnDate } from '@/lib/activityUtils';
 
 function getActivitiesForDay(activities, dateStr) {
-  return activities.filter(a => {
-    if (!a.date) return false;
-    const actStart = moment(a.date);
-    const day = moment(dateStr);
-    if (a.date === dateStr) return true;
-    if (!a.recurrence || a.recurrence === 'none') return false;
-    if (day.isBefore(actStart)) return false;
-    if (a.recurrence_end_date && day.isAfter(moment(a.recurrence_end_date))) return false;
-    if (a.recurrence === 'daily') return true;
-    if (a.recurrence === 'weekly') return day.day() === actStart.day();
-    if (a.recurrence === 'monthly') return day.date() === actStart.date();
-    return false;
-  });
+  return activities.filter((a) => occursOnDate(a, dateStr));
 }
 
 const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];

@@ -11,6 +11,7 @@ import AddEventDialog from '../components/calendar/AddEventDialog';
 import DayStats from '../components/calendar/DayStats';
 import ReminderChecker from '../components/calendar/ReminderChecker';
 import { motion } from 'framer-motion';
+import { occursOnDate } from '@/lib/activityUtils';
 
 export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(moment().format('YYYY-MM-DD'));
@@ -30,26 +31,7 @@ export default function Dashboard() {
   });
 
   // Calcola le attività del giorno selezionato, incluse le ricorrenti
-  const todayActivities = activities.filter(a => {
-    if (!a.date) return false;
-    const actStart = moment(a.date);
-    const selected = moment(selectedDate);
-
-    // Attività esatta (non ricorrente o data di partenza)
-    if (a.date === selectedDate) return true;
-    if (!a.recurrence || a.recurrence === 'none') return false;
-
-    // La data selezionata deve essere >= data di inizio
-    if (selected.isBefore(actStart)) return false;
-
-    // Controlla data fine ricorrenza
-    if (a.recurrence_end_date && selected.isAfter(moment(a.recurrence_end_date))) return false;
-
-    if (a.recurrence === 'daily') return true;
-    if (a.recurrence === 'weekly') return selected.day() === actStart.day();
-    if (a.recurrence === 'monthly') return selected.date() === actStart.date();
-    return false;
-  });
+  const todayActivities = activities.filter((a) => occursOnDate(a, selectedDate));
 
   const createMutation = useMutation({
     mutationFn: (data) => apiClient.activities.create(data),
@@ -176,19 +158,7 @@ export default function Dashboard() {
               <div className="flex-1 grid grid-cols-7 gap-1.5">
                 {weekDays.map(day => {
                   const dayStr = day.format('YYYY-MM-DD');
-                  const dayActivities = activities.filter(a => {
-                    if (!a.date) return false;
-                    const actStart = moment(a.date);
-                    const d = moment(dayStr);
-                    if (a.date === dayStr) return true;
-                    if (!a.recurrence || a.recurrence === 'none') return false;
-                    if (d.isBefore(actStart)) return false;
-                    if (a.recurrence_end_date && d.isAfter(moment(a.recurrence_end_date))) return false;
-                    if (a.recurrence === 'daily') return true;
-                    if (a.recurrence === 'weekly') return d.day() === actStart.day();
-                    if (a.recurrence === 'monthly') return d.date() === actStart.date();
-                    return false;
-                  });
+                  const dayActivities = activities.filter((a) => occursOnDate(a, dayStr));
                   const isSelected = dayStr === selectedDate;
                   const isDayToday = dayStr === moment().format('YYYY-MM-DD');
                   return (
