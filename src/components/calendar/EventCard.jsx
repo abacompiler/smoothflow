@@ -3,9 +3,11 @@ import { Clock, Bell, Sparkles, Pencil, Trash2, Repeat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CategoryBadge, { getCategoryColors } from './CategoryBadge';
 import { motion } from 'framer-motion';
+import { endsNextDay } from '@/lib/activityUtils';
 
 export default function EventCard({ activity, category, onEdit, onDelete }) {
   const colors = getCategoryColors(category?.color);
+  const endsTomorrow = endsNextDay(activity);
   const priorityLabels = { low: 'Bassa', medium: 'Media', high: 'Alta' };
   const recurrenceLabels = { daily: 'Giornaliera', weekly: 'Settimanale', monthly: 'Mensile' };
 
@@ -30,7 +32,7 @@ export default function EventCard({ activity, category, onEdit, onDelete }) {
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
-              {activity.start_time} - {activity.end_time}
+              {activity.start_time} - {activity.end_time}{endsTomorrow ? ' (+1g)' : ''}
             </span>
             {activity.reminder_minutes > 0 && (
               <span className="flex items-center gap-1">
