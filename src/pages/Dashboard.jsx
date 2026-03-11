@@ -212,7 +212,13 @@ export default function Dashboard() {
                     </Button>
                   </div>
                 ) : (
-                  <Timeline activities={todayActivities} categories={categories} onEdit={handleEdit} onDelete={handleDelete} />
+                  <Timeline
+                    activities={todayActivities}
+                    categories={categories}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    selectedDate={selectedDate}
+                  />
                 )}
               </div>
             </div>

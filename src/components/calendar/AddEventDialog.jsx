@@ -20,6 +20,23 @@ const RECURRENCE_LABELS = {
   monthly: 'Ogni mese'
 };
 
+const getRoundedQuarterDefaults = () => {
+  const roundedStart = moment().seconds(0).milliseconds(0);
+  const remainder = roundedStart.minute() % 15;
+
+  if (remainder !== 0) {
+    roundedStart.add(15 - remainder, 'minutes');
+  }
+
+  const roundedEnd = roundedStart.clone().add(1, 'hour');
+
+  return {
+    start_time: roundedStart.format('HH:mm'),
+    end_time: roundedEnd.format('HH:mm'),
+    ends_next_day: roundedEnd.isAfter(roundedStart, 'day')
+  };
+};
+
 export default function AddEventDialog({ open, onOpenChange, onSave, categories, editingActivity, selectedDate }) {
   const [form, setForm] = useState({
     title: '',
@@ -52,18 +69,20 @@ export default function AddEventDialog({ open, onOpenChange, onSave, categories,
         ends_next_day: Boolean(editingActivity.end_date && moment(editingActivity.end_date).isAfter(moment(editingActivity.date), 'day'))
       });
     } else {
+      const defaults = getRoundedQuarterDefaults();
+
       setForm({
         title: '',
         description: '',
         date: selectedDate || '',
-        start_time: '09:00',
-        end_time: '10:00',
+        start_time: defaults.start_time,
+        end_time: defaults.end_time,
         category_id: '',
         reminder_minutes: 15,
         priority: 'medium',
         recurrence: 'none',
         recurrence_end_date: '',
-        ends_next_day: false
+        ends_next_day: defaults.ends_next_day
       });
     }
     setTimeError('');
@@ -137,6 +156,7 @@ export default function AddEventDialog({ open, onOpenChange, onSave, categories,
               <Label className="flex items-center gap-1"><Clock className="w-3 h-3" /> Inizio</Label>
               <Input
                 type="time"
+                step={900}
                 value={form.start_time}
                 onChange={e => {
                   setForm({ ...form, start_time: e.target.value });
@@ -149,6 +169,7 @@ export default function AddEventDialog({ open, onOpenChange, onSave, categories,
               <Label className="flex items-center gap-1"><Clock className="w-3 h-3" /> Fine</Label>
               <Input
                 type="time"
+                step={900}
                 value={form.end_time}
                 onChange={e => {
                   setForm({ ...form, end_time: e.target.value });
