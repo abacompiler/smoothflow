@@ -18,9 +18,6 @@ export const apiClient = {
     update: (id, data) => appClient.entities.Category.update(id, data),
     delete: (id) => appClient.entities.Category.delete(id)
   },
-  ai: {
-    suggest: (payload) => appClient.integrations.Core.InvokeLLM(payload)
-  },
   notifications: {
     sendReminder: (payload) => appClient.integrations.Core.SendEmail(payload)
   }

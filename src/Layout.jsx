@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { CalendarDays, Tag, Menu, X, LogOut } from 'lucide-react';
+import { CalendarDays, Tag, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { apiClient } from '@/api/client';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const navItems = [
@@ -43,17 +42,7 @@ export default function Layout({ children, currentPageName }) {
             );
           })}
         </nav>
-        <div className="p-3 border-t">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-muted-foreground"
-            onClick={() => apiClient.auth.logout()}
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Esci
-          </Button>
-        </div>
+        <div className="p-3 border-t" />
       </aside>
 
       {/* Mobile Header */}

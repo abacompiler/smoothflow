@@ -2,38 +2,145 @@ import React from 'react';
 import moment from 'moment';
 import { getCategoryColors } from './CategoryBadge';
 import { Repeat } from 'lucide-react';
+import { endsNextDay, occursOnDate, toMinutes } from '@/lib/activityUtils';
 
-const HOURS = Array.from({ length: 17 }, (_, i) => i + 6); // 6:00 - 22:00
+const START_HOUR = 6;
+const END_HOUR = 22;
+const HOUR_HEIGHT = 56;
+const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => i + START_HOUR);
+const DAY_COLUMNS = 7;
+const EVENT_GAP_PX = 4;
 
-function getActivitiesForDay(activities, dateStr) {
-  return activities.filter(a => {
-    if (!a.date) return false;
-    const actStart = moment(a.date);
-    const day = moment(dateStr);
-    if (a.date === dateStr) return true;
-    if (!a.recurrence || a.recurrence === 'none') return false;
-    if (day.isBefore(actStart)) return false;
-    if (a.recurrence_end_date && day.isAfter(moment(a.recurrence_end_date))) return false;
-    if (a.recurrence === 'daily') return true;
-    if (a.recurrence === 'weekly') return day.day() === actStart.day();
-    if (a.recurrence === 'monthly') return day.date() === actStart.date();
-    return false;
+function getVisibleRange(activity, dateStr) {
+  const overnight = endsNextDay(activity);
+  const isStartingToday = activity.date === dateStr;
+
+  let startMinutes = isStartingToday ? toMinutes(activity.start_time) : 0;
+  let endMinutes = isStartingToday
+    ? (overnight ? (24 * 60) + toMinutes(activity.end_time) : toMinutes(activity.end_time))
+    : toMinutes(activity.end_time);
+
+  const windowStart = START_HOUR * 60;
+  const windowEnd = END_HOUR * 60;
+
+  startMinutes = Math.max(startMinutes, windowStart);
+  endMinutes = Math.min(endMinutes, windowEnd);
+
+  if (endMinutes <= startMinutes) return null;
+
+  return { startMinutes, endMinutes };
+}
+
+function buildColumns(events) {
+  const clusters = [];
+  let currentCluster = [];
+  let clusterEnd = -1;
+
+  events.forEach((event) => {
+    if (currentCluster.length === 0) {
+      currentCluster = [event];
+      clusterEnd = event.endMinutes;
+      return;
+    }
+
+    if (event.startMinutes < clusterEnd) {
+      currentCluster.push(event);
+      clusterEnd = Math.max(clusterEnd, event.endMinutes);
+      return;
+    }
+
+    clusters.push(currentCluster);
+    currentCluster = [event];
+    clusterEnd = event.endMinutes;
+  });
+
+  if (currentCluster.length > 0) {
+    clusters.push(currentCluster);
+  }
+
+  return clusters.flatMap((cluster) => {
+    const active = [];
+    let maxColumns = 0;
+
+    const withColumns = cluster.map((event) => {
+      for (let i = active.length - 1; i >= 0; i -= 1) {
+        if (active[i].endMinutes <= event.startMinutes) {
+          active.splice(i, 1);
+        }
+      }
+
+      const usedColumns = new Set(active.map((a) => a.column));
+      let column = 0;
+      while (usedColumns.has(column)) {
+        column += 1;
+      }
+
+      const current = { ...event, column };
+      active.push(current);
+      maxColumns = Math.max(maxColumns, active.length);
+      return current;
+    });
+
+    return withColumns.map((event) => ({
+      ...event,
+      clusterColumns: maxColumns
+    }));
   });
 }
 
 export default function WeekView({ selectedDate, activities, categories, onDayClick, onEdit }) {
   const weekStart = moment(selectedDate).startOf('week');
-  const weekDays = Array.from({ length: 7 }, (_, i) => weekStart.clone().add(i, 'days'));
+  const weekDays = Array.from({ length: DAY_COLUMNS }, (_, i) => weekStart.clone().add(i, 'days'));
   const today = moment().format('YYYY-MM-DD');
+  const totalHeight = HOURS.length * HOUR_HEIGHT;
 
-  const getCategoryById = (id) => categories.find(c => c.id === id);
+  const getCategoryById = (id) => categories.find((c) => c.id === id);
+
+  const positionedEvents = weekDays.flatMap((day, dayIndex) => {
+    const dayStr = day.format('YYYY-MM-DD');
+
+    const dayEvents = activities
+      .filter((activity) => occursOnDate(activity, dayStr))
+      .map((activity) => {
+        const range = getVisibleRange(activity, dayStr);
+        if (!range) return null;
+
+        return {
+          activity,
+          startMinutes: range.startMinutes,
+          endMinutes: range.endMinutes
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => {
+        if (a.startMinutes !== b.startMinutes) return a.startMinutes - b.startMinutes;
+        return a.endMinutes - b.endMinutes;
+      });
+
+    return buildColumns(dayEvents).map((event) => {
+      const top = ((event.startMinutes - START_HOUR * 60) / 60) * HOUR_HEIGHT;
+      const height = Math.max(((event.endMinutes - event.startMinutes) / 60) * HOUR_HEIGHT, 24);
+
+      const dayWidth = 100 / DAY_COLUMNS;
+      const eventWidth = dayWidth / event.clusterColumns;
+      const left = (dayIndex * dayWidth) + (event.column * eventWidth);
+
+      return {
+        ...event,
+        top,
+        height,
+        left,
+        width: eventWidth
+      };
+    });
+  });
 
   return (
     <div className="bg-card rounded-2xl border overflow-hidden">
       {/* Day headers */}
       <div className="grid grid-cols-8 border-b">
         <div className="p-3" />
-        {weekDays.map(day => {
+        {weekDays.map((day) => {
           const dayStr = day.format('YYYY-MM-DD');
           const isToday = dayStr === today;
           const isSelected = dayStr === selectedDate;
@@ -57,42 +164,44 @@ export default function WeekView({ selectedDate, activities, categories, onDayCl
       </div>
 
       {/* Time grid */}
-      <div className="overflow-y-auto max-h-[600px]">
-        {HOURS.map(hour => (
+      <div className="overflow-y-auto max-h-[600px] no-scrollbar relative">
+        {HOURS.map((hour) => (
           <div key={hour} className="grid grid-cols-8 min-h-[56px] border-b last:border-0">
             <div className="px-2 pt-1 text-[10px] font-medium text-muted-foreground text-right border-r">
               {String(hour).padStart(2, '0')}:00
             </div>
-            {weekDays.map(day => {
-              const dayStr = day.format('YYYY-MM-DD');
-              const dayActivities = getActivitiesForDay(activities, dayStr).filter(a => {
-                const [h] = a.start_time.split(':').map(Number);
-                return h === hour;
-              });
-              return (
-                <div key={dayStr} className="border-l p-1 space-y-0.5">
-                  {dayActivities.map(a => {
-                    const cat = getCategoryById(a.category_id);
-                    const colors = getCategoryColors(cat?.color);
-                    return (
-                      <button
-                        key={a.id}
-                        onClick={() => onEdit(a)}
-                        className={`w-full text-left rounded px-1.5 py-1 text-[10px] font-medium truncate border ${colors.bg} ${colors.text} ${colors.border} hover:opacity-80 transition-opacity`}
-                      >
-                        <div className="flex items-center gap-1">
-                          {a.recurrence && a.recurrence !== 'none' && <Repeat className="w-2.5 h-2.5 flex-shrink-0" />}
-                          <span className="truncate">{a.title}</span>
-                        </div>
-                        <div className="opacity-70">{a.start_time}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-              );
-            })}
+            {weekDays.map((day) => (
+              <div key={`${day.format('YYYY-MM-DD')}-${hour}`} className="border-l" />
+            ))}
           </div>
         ))}
+
+        <div className="absolute top-0 left-[calc(12.5%)] right-0" style={{ height: `${totalHeight}px` }}>
+          {positionedEvents.map(({ activity, top, height, left, width, startMinutes }) => {
+            const cat = getCategoryById(activity.category_id);
+            const colors = getCategoryColors(cat?.color);
+
+            return (
+              <button
+                key={`${activity.id}-${left}-${startMinutes}`}
+                onClick={() => onEdit(activity)}
+                className={`absolute rounded px-1.5 py-1 text-[10px] font-medium border ${colors.bg} ${colors.text} ${colors.border} hover:opacity-90 transition-opacity text-left overflow-hidden`}
+                style={{
+                  top: `${top}px`,
+                  height: `${height}px`,
+                  left: `calc(${left}% + ${EVENT_GAP_PX / 2}px)`,
+                  width: `calc(${width}% - ${EVENT_GAP_PX}px)`
+                }}
+              >
+                <div className="flex items-center gap-1">
+                  {activity.recurrence && activity.recurrence !== 'none' && <Repeat className="w-2.5 h-2.5 flex-shrink-0" />}
+                  <span className="truncate">{activity.title}</span>
+                </div>
+                <div className="opacity-70 truncate">{activity.start_time} - {activity.end_time}</div>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
