@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Settings2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Loader2, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -20,10 +20,66 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useAppSettings } from '@/lib/AppSettingsContext';
+import { isValidEmail } from '@/lib/emailValidation';
+import { toast } from 'sonner';
+import { sendActivityReminder } from '@/services/reminders';
 
 export default function SettingsMenu({ mobile = false }) {
   const [open, setOpen] = useState(false);
-  const { settings, updateSetting } = useAppSettings();
+  const [emailDraft, setEmailDraft] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [isSendingTest, setIsSendingTest] = useState(false);
+  const { settings, updateSetting, emailValidity } = useAppSettings();
+
+  useEffect(() => {
+    setEmailDraft(settings.reminderEmail);
+  }, [settings.reminderEmail]);
+
+  const saveReminderEmail = () => {
+    const normalizedEmail = emailDraft.trim();
+
+    if (!isValidEmail(normalizedEmail)) {
+      setEmailError('Formato email non valido (es: nome@esempio.it).');
+      toast.warning('Email non salvata: formato non valido.');
+      return false;
+    }
+
+    setEmailError('');
+    if (normalizedEmail !== settings.reminderEmail) {
+      updateSetting('reminderEmail', normalizedEmail);
+    }
+    return true;
+  };
+
+  const sendTestEmail = async () => {
+    if (!saveReminderEmail()) return;
+
+    const targetEmail = emailDraft.trim();
+    if (!targetEmail) {
+      toast.warning('Inserisci un\'email prima di inviare un test.');
+      return;
+    }
+
+    setIsSendingTest(true);
+    const result = await sendActivityReminder({
+      recipientEmail: targetEmail,
+      activity: {
+        title: 'Email di test SmoothFlow',
+        reminder_minutes: 0,
+        start_time: '--:--',
+        end_time: '--:--',
+        description: 'Questo è un invio di test dalle impostazioni.'
+      }
+    });
+    setIsSendingTest(false);
+
+    if (result?.status === 'sent') {
+      toast.success('Email di test inviata con successo.');
+      return;
+    }
+
+    toast.error('Invio email di test fallito. Riprova tra poco.');
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -90,10 +146,37 @@ export default function SettingsMenu({ mobile = false }) {
               id="reminder-email"
               type="email"
               placeholder="nome@esempio.it"
-              value={settings.reminderEmail}
-              onChange={(event) => updateSetting('reminderEmail', event.target.value)}
+              value={emailDraft}
+              onChange={(event) => {
+                setEmailDraft(event.target.value);
+                if (emailError) setEmailError('');
+              }}
+              onBlur={saveReminderEmail}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  saveReminderEmail();
+                }
+              }}
             />
-            <p className="text-xs text-muted-foreground">Se vuoto, il reminder email non viene inviato</p>
+            {emailError ? (
+              <p className="text-xs text-destructive">{emailError}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">Se vuoto, il reminder email non viene inviato</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Stato email: {emailValidity === 'valid' ? 'valida' : emailValidity === 'invalid' ? 'non valida' : 'non impostata'}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={sendTestEmail}
+              disabled={isSendingTest}
+            >
+              {isSendingTest ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Invia email di test
+            </Button>
           </div>
 
           <div className="flex items-center justify-between rounded-lg border p-3">

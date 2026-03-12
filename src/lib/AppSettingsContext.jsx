@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { getEmailValidity, isValidEmail } from '@/lib/emailValidation';
 
 const STORAGE_KEY = 'smoothflow.settings';
 
@@ -12,7 +13,9 @@ const defaultSettings = {
 
 const AppSettingsContext = createContext({
   settings: defaultSettings,
-  updateSetting: () => {}
+  updateSetting: () => {},
+  emailValidity: 'empty',
+  canSaveReminderEmail: true
 });
 
 function getSystemTheme() {
@@ -58,6 +61,8 @@ export function AppSettingsProvider({ children }) {
 
   const value = useMemo(() => ({
     settings,
+    emailValidity: getEmailValidity(settings.reminderEmail),
+    canSaveReminderEmail: isValidEmail(settings.reminderEmail),
     updateSetting: (key, valueToSet) => {
       setSettings((prev) => ({ ...prev, [key]: valueToSet }));
     }

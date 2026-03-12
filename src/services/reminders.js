@@ -1,10 +1,15 @@
 import { apiClient } from '@/api/client';
+import { isValidEmail } from '@/lib/emailValidation';
 
 export const sendActivityReminder = async ({ activity, recipientEmail }) => {
   const normalizedRecipient = recipientEmail?.trim();
 
   if (!normalizedRecipient) {
     return { status: 'skipped_no_recipient' };
+  }
+
+  if (!isValidEmail(normalizedRecipient)) {
+    return { status: 'skipped_invalid_recipient' };
   }
 
   try {
