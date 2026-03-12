@@ -2,9 +2,11 @@ import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import moment from 'moment';
 import { markReminderAsSent, sendActivityReminder } from '@/services/reminders';
+import { useAppSettings } from '@/lib/AppSettingsContext';
 
 export default function ReminderChecker({ activities }) {
   const sentReminders = useRef(new Set());
+  const { settings } = useAppSettings();
 
   useEffect(() => {
     const checkReminders = async () => {
@@ -24,7 +26,13 @@ export default function ReminderChecker({ activities }) {
             duration: 10000,
           });
 
-          await sendActivityReminder({ activity });
+          const result = await sendActivityReminder({ activity, settings });
+
+          if (result?.status === 'skipped_no_recipient') {
+            toast.warning("Reminder non inviato: aggiungi un'email in Impostazioni > Promemoria o nel profilo.");
+            continue;
+          }
+
           await markReminderAsSent(activity.id);
         }
       }
@@ -33,7 +41,7 @@ export default function ReminderChecker({ activities }) {
     const interval = setInterval(checkReminders, 30000);
     checkReminders();
     return () => clearInterval(interval);
-  }, [activities]);
+  }, [activities, settings]);
 
   return null;
 }

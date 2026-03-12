@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { useAppSettings } from '@/lib/AppSettingsContext';
 
 export default function SettingsMenu({ mobile = false }) {
@@ -80,6 +81,19 @@ export default function SettingsMenu({ mobile = false }) {
                 <SelectItem value="month">Mese</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+
+          <div className="space-y-2">
+            <Label htmlFor="reminder-email">Promemoria</Label>
+            <Input
+              id="reminder-email"
+              type="email"
+              placeholder="nome@esempio.it"
+              value={settings.reminderEmail}
+              onChange={(event) => updateSetting('reminderEmail', event.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">Se vuoto, usa l’email del profilo</p>
           </div>
 
           <div className="flex items-center justify-between rounded-lg border p-3">
