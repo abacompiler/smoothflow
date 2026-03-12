@@ -31,6 +31,14 @@ export default function ReminderChecker({ activities }) {
             continue;
           }
 
+          if (result?.status === 'skipped_invalid_recipient') {
+            if (!missingRecipientWarnings.current.has(activity.id)) {
+              toast.warning("Reminder non inviato: email promemoria non valida in Impostazioni.");
+              missingRecipientWarnings.current.add(activity.id);
+            }
+            continue;
+          }
+
           if (result?.status === 'failed') {
             toast.error('Invio reminder fallito. Riproverò automaticamente tra poco.');
             continue;
