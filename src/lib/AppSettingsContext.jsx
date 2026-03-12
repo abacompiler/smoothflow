@@ -6,7 +6,8 @@ const defaultSettings = {
   theme: 'system',
   weekStartsOn: 'monday',
   defaultView: 'day',
-  showWeekends: true
+  showWeekends: true,
+  reminderEmail: ''
 };
 
 const AppSettingsContext = createContext({
