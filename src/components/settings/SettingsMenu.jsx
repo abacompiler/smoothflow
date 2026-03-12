@@ -93,7 +93,7 @@ export default function SettingsMenu({ mobile = false }) {
               value={settings.reminderEmail}
               onChange={(event) => updateSetting('reminderEmail', event.target.value)}
             />
-            <p className="text-xs text-muted-foreground">Se vuoto, usa l’email del profilo</p>
+            <p className="text-xs text-muted-foreground">Se vuoto, il reminder email non viene inviato</p>
           </div>
 
           <div className="flex items-center justify-between rounded-lg border p-3">
