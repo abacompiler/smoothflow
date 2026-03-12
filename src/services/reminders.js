@@ -1,12 +1,15 @@
 import { apiClient } from '@/api/client';
 
-export const sendActivityReminder = async ({ activity }) => {
+export const sendActivityReminder = async ({ activity, settings }) => {
   const user = await apiClient.auth.me();
+  const recipientEmail = settings?.reminderEmail || user?.email;
 
-  if (!user?.email) return;
+  if (!recipientEmail) {
+    return { status: 'skipped_no_recipient' };
+  }
 
   await apiClient.notifications.sendReminder({
-    to: user.email,
+    to: recipientEmail,
     subject: `⏰ Reminder: ${activity.title}`,
     body: `<h2>Promemoria</h2>
       <p>L'attività <strong>${activity.title}</strong> inizierà tra ${activity.reminder_minutes} minuti.</p>
@@ -14,6 +17,8 @@ export const sendActivityReminder = async ({ activity }) => {
       ${activity.description ? `<p><strong>Descrizione:</strong> ${activity.description}</p>` : ''}
       <p>Buon lavoro!</p>`
   });
+
+  return { status: 'sent' };
 };
 
 export const markReminderAsSent = (activityId) => apiClient.activities.update(activityId, { reminder_sent: true });
