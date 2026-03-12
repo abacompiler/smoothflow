@@ -14,6 +14,7 @@ import { motion } from 'framer-motion';
 import { occursOnDate } from '@/lib/activityUtils';
 import { useAppSettings } from '@/lib/AppSettingsContext';
 import { endOfWeek, getWeekDays, startOfWeek } from '@/lib/dateUtils';
+import { syncCloudEvents, trackActivityEvent } from '@/services/cloudSync';
 
 export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(moment().format('YYYY-MM-DD'));
@@ -26,6 +27,10 @@ export default function Dashboard() {
   useEffect(() => {
     setViewMode(settings.defaultView);
   }, [settings.defaultView]);
+
+  useEffect(() => {
+    syncCloudEvents().catch(() => undefined);
+  }, []);
 
   const { data: activities = [] } = useQuery({
     queryKey: ['activities'],
@@ -42,7 +47,9 @@ export default function Dashboard() {
 
   const createMutation = useMutation({
     mutationFn: (data) => apiClient.activities.create(data),
-    onSuccess: () => {
+    onSuccess: (createdActivity) => {
+      trackActivityEvent('created', createdActivity);
+      syncCloudEvents().catch(() => undefined);
       queryClient.invalidateQueries({ queryKey: ['activities'] });
       setDialogOpen(false);
       setEditingActivity(null);
@@ -51,7 +58,9 @@ export default function Dashboard() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => apiClient.activities.update(id, data),
-    onSuccess: () => {
+    onSuccess: (updatedActivity) => {
+      trackActivityEvent('updated', updatedActivity);
+      syncCloudEvents().catch(() => undefined);
       queryClient.invalidateQueries({ queryKey: ['activities'] });
       setDialogOpen(false);
       setEditingActivity(null);
@@ -60,7 +69,11 @@ export default function Dashboard() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => apiClient.activities.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['activities'] })
+    onSuccess: (_, deletedId) => {
+      trackActivityEvent('deleted', { id: deletedId });
+      syncCloudEvents().catch(() => undefined);
+      queryClient.invalidateQueries({ queryKey: ['activities'] });
+    }
   });
 
   const handleSave = (form) => {
