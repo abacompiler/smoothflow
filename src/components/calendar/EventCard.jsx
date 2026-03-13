@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Clock, Bell, Sparkles, Pencil, Trash2, Repeat } from 'lucide-react';
+import { Clock, Bell, Sparkles, Pencil, Trash2, Repeat, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CategoryBadge, { getCategoryColors } from './CategoryBadge';
 import { motion } from 'framer-motion';
@@ -11,7 +11,6 @@ export default function EventCard({ activity, category, onEdit, onDelete }) {
   const priorityLabels = { low: 'Bassa', medium: 'Media', high: 'Alta' };
   const recurrenceLabels = { daily: 'Giornaliera', weekly: 'Settimanale', monthly: 'Mensile' };
   const cardRef = useRef(null);
-  const actionAreaRef = useRef(null);
   const [isCompact, setIsCompact] = useState(false);
   const [isDeleteConfirmVisible, setIsDeleteConfirmVisible] = useState(false);
 
@@ -35,23 +34,9 @@ export default function EventCard({ activity, category, onEdit, onDelete }) {
     setIsDeleteConfirmVisible(false);
   }, [activity.id]);
 
-  useEffect(() => {
-    if (!isDeleteConfirmVisible) return undefined;
-
-    const handleClickOutside = (event) => {
-      if (actionAreaRef.current && !actionAreaRef.current.contains(event.target)) {
-        setIsDeleteConfirmVisible(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isDeleteConfirmVisible]);
-
   const handleDeleteClick = (event) => {
     event.stopPropagation();
-    setIsDeleteConfirmVisible((prev) => !prev);
+    setIsDeleteConfirmVisible(true);
   };
 
   const handleDeleteCancel = (event) => {
@@ -138,30 +123,26 @@ export default function EventCard({ activity, category, onEdit, onDelete }) {
           </div>
         </div>
         
-        <div
-          ref={actionAreaRef}
-          onMouseLeave={() => setIsDeleteConfirmVisible(false)}
-          className={`relative flex gap-1 transition-opacity ${isDeleteConfirmVisible ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-        >
-          {isDeleteConfirmVisible && (
-            <div className="absolute right-0 top-full mt-1.5 z-20 w-44 rounded-md border border-border bg-card p-2 shadow-lg" onClick={(event) => event.stopPropagation()}>
-              <p className="text-[11px] text-foreground mb-2">Eliminare questa attività?</p>
-              <div className="flex gap-1.5">
-                <Button type="button" size="sm" variant="destructive" className="h-7 px-2 text-[11px]" onClick={handleDeleteConfirm}>
-                  Conferma
-                </Button>
-                <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={handleDeleteCancel}>
-                  Annulla
-                </Button>
-              </div>
-            </div>
+        <div className={`relative flex gap-1 transition-opacity ${isDeleteConfirmVisible ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+          {isDeleteConfirmVisible ? (
+            <>
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7 border border-emerald-300/70 text-emerald-700 hover:text-emerald-800 dark:border-emerald-400/50 dark:text-emerald-300 dark:bg-black/20" onClick={handleDeleteConfirm}>
+                <Check className="w-3.5 h-3.5" />
+              </Button>
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7 border border-border/60 dark:border-white/30 dark:bg-black/20" onClick={handleDeleteCancel}>
+                <X className="w-3.5 h-3.5" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7 border border-border/60 dark:border-white/30 dark:bg-black/20" onClick={(event) => { event.stopPropagation(); onEdit(activity); }}>
+                <Pencil className="w-3.5 h-3.5" />
+              </Button>
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive border border-border/60 dark:border-white/30 dark:bg-black/20" onClick={handleDeleteClick}>
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+            </>
           )}
-          <Button type="button" variant="ghost" size="icon" className="h-7 w-7 border border-border/60 dark:border-white/30 dark:bg-black/20" onClick={(event) => { event.stopPropagation(); onEdit(activity); }}>
-            <Pencil className="w-3.5 h-3.5" />
-          </Button>
-          <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive border border-border/60 dark:border-white/30 dark:bg-black/20" onClick={handleDeleteClick}>
-            <Trash2 className="w-3.5 h-3.5" />
-          </Button>
         </div>
       </div>
     </motion.div>
