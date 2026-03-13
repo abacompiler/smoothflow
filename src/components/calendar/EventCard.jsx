@@ -126,10 +126,10 @@ export default function EventCard({ activity, category, onEdit, onDelete }) {
         <div className={`relative flex gap-1 transition-opacity ${isDeleteConfirmVisible ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
           {isDeleteConfirmVisible ? (
             <>
-              <Button type="button" variant="ghost" size="icon" className="h-7 w-7 border border-emerald-300/70 text-emerald-700 hover:text-emerald-800 dark:border-emerald-400/50 dark:text-emerald-300 dark:bg-black/20" onClick={handleDeleteConfirm}>
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7 bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 dark:border-emerald-400" onClick={handleDeleteConfirm}>
                 <Check className="w-3.5 h-3.5" />
               </Button>
-              <Button type="button" variant="ghost" size="icon" className="h-7 w-7 border border-border/60 dark:border-white/30 dark:bg-black/20" onClick={handleDeleteCancel}>
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7 bg-red-600 hover:bg-red-700 text-white border border-red-700 dark:bg-red-500 dark:hover:bg-red-600 dark:border-red-400" onClick={handleDeleteCancel}>
                 <X className="w-3.5 h-3.5" />
               </Button>
             </>
