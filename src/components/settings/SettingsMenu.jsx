@@ -23,29 +23,17 @@ import { useAppSettings } from '@/lib/AppSettingsContext';
 import { isValidEmail } from '@/lib/emailValidation';
 import { toast } from 'sonner';
 import { sendActivityReminder } from '@/services/reminders';
-import {
-  getPendingCloudEventsCount,
-  sendCloudTestEmail,
-  syncCloudEvents,
-  syncCloudUserSettings
-} from '@/services/cloudSync';
 
 export default function SettingsMenu({ mobile = false }) {
   const [open, setOpen] = useState(false);
   const [emailDraft, setEmailDraft] = useState('');
   const [emailError, setEmailError] = useState('');
   const [isSendingTest, setIsSendingTest] = useState(false);
-  const [isSyncingCloud, setIsSyncingCloud] = useState(false);
-  const [pendingCloudEvents, setPendingCloudEvents] = useState(0);
   const { settings, updateSetting, emailValidity } = useAppSettings();
 
   useEffect(() => {
     setEmailDraft(settings.reminderEmail);
   }, [settings.reminderEmail]);
-
-  useEffect(() => {
-    setPendingCloudEvents(getPendingCloudEventsCount());
-  }, [open]);
 
   const saveReminderEmail = () => {
     const normalizedEmail = emailDraft.trim();
@@ -91,51 +79,6 @@ export default function SettingsMenu({ mobile = false }) {
     }
 
     toast.error('Invio email di test fallito. Riprova tra poco.');
-  };
-
-  const syncNow = async () => {
-    setIsSyncingCloud(true);
-    const [settingsResult, eventsResult] = await Promise.allSettled([
-      syncCloudUserSettings(),
-      syncCloudEvents()
-    ]);
-    setIsSyncingCloud(false);
-    setPendingCloudEvents(getPendingCloudEventsCount());
-
-    if (settingsResult.status === 'fulfilled' && eventsResult.status === 'fulfilled') {
-      if (
-        settingsResult.value.status === 'synced' &&
-        ['synced', 'skipped_no_events', 'skipped_not_configured'].includes(eventsResult.value.status)
-      ) {
-        toast.success('Sincronizzazione cloud completata.');
-        return;
-      }
-
-      if (eventsResult.value.status === 'skipped_not_configured') {
-        toast.warning('Configura URL API cloud e ID utente per attivare la sincronizzazione.');
-        return;
-      }
-    }
-
-    toast.error('Sincronizzazione cloud fallita. Verifica configurazione e connettività.');
-  };
-
-  const sendCloudEmailTest = async () => {
-    setIsSendingTest(true);
-    const result = await sendCloudTestEmail().catch(() => ({ status: 'failed' }));
-    setIsSendingTest(false);
-
-    if (result.status === 'sent') {
-      toast.success('Email di test inviata dal servizio cloud.');
-      return;
-    }
-
-    if (result.status === 'skipped_not_configured') {
-      toast.warning('Configura prima il servizio cloud (abilitazione, URL API, ID utente).');
-      return;
-    }
-
-    toast.error('Invio cloud test fallito.');
   };
 
   return (
@@ -232,65 +175,8 @@ export default function SettingsMenu({ mobile = false }) {
               disabled={isSendingTest}
             >
               {isSendingTest ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Invia email di test (locale)
+              Invia email di test
             </Button>
-          </div>
-
-          <div className="space-y-3 rounded-lg border p-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Servizio cloud notifiche email</p>
-                <p className="text-xs text-muted-foreground">Consigliato: Cloudflare Worker + Brevo gratuito.</p>
-              </div>
-              <Switch
-                checked={settings.cloudSyncEnabled}
-                onCheckedChange={(checked) => updateSetting('cloudSyncEnabled', checked)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="cloud-api-url">URL API cloud</Label>
-              <Input
-                id="cloud-api-url"
-                placeholder="https://your-worker.your-subdomain.workers.dev"
-                value={settings.cloudApiBaseUrl}
-                onChange={(event) => updateSetting('cloudApiBaseUrl', event.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="cloud-user-id">ID utente cloud</Label>
-              <Input
-                id="cloud-user-id"
-                placeholder="es. user-123"
-                value={settings.cloudUserId}
-                onChange={(event) => updateSetting('cloudUserId', event.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="cloud-api-token">Token API cloud (opzionale)</Label>
-              <Input
-                id="cloud-api-token"
-                type="password"
-                placeholder="Bearer token"
-                value={settings.cloudApiToken}
-                onChange={(event) => updateSetting('cloudApiToken', event.target.value)}
-              />
-            </div>
-
-            <p className="text-xs text-muted-foreground">Eventi in coda locale: {pendingCloudEvents}</p>
-
-            <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={syncNow} disabled={isSyncingCloud}>
-                {isSyncingCloud ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Sincronizza ora
-              </Button>
-              <Button type="button" variant="outline" size="sm" onClick={sendCloudEmailTest} disabled={isSendingTest}>
-                {isSendingTest ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Test email da cloud
-              </Button>
-            </div>
           </div>
 
           <div className="flex items-center justify-between rounded-lg border p-3">
