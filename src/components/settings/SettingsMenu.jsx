@@ -35,6 +35,9 @@ export default function SettingsMenu({ mobile = false }) {
     setEmailDraft(settings.reminderEmail);
   }, [settings.reminderEmail]);
 
+  const reminderChannels = settings.reminderChannels ?? { email: true, notification: true };
+  const noReminderChannelActive = !reminderChannels.email && !reminderChannels.notification;
+
   const saveReminderEmail = () => {
     const normalizedEmail = emailDraft.trim();
 
@@ -79,6 +82,13 @@ export default function SettingsMenu({ mobile = false }) {
     }
 
     toast.error('Invio email di test fallito. Riprova tra poco.');
+  };
+
+  const updateReminderChannel = (channel, checked) => {
+    updateSetting('reminderChannels', {
+      ...reminderChannels,
+      [channel]: checked
+    });
   };
 
   return (
@@ -177,6 +187,27 @@ export default function SettingsMenu({ mobile = false }) {
               {isSendingTest ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Invia email di test
             </Button>
+          </div>
+
+          <div className="space-y-3 rounded-lg border p-3">
+            <p className="text-sm font-medium">Canali reminder</p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm">Email</p>
+              <Switch
+                checked={reminderChannels.email}
+                onCheckedChange={(checked) => updateReminderChannel('email', checked)}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-sm">Notifiche</p>
+              <Switch
+                checked={reminderChannels.notification}
+                onCheckedChange={(checked) => updateReminderChannel('notification', checked)}
+              />
+            </div>
+            {noReminderChannelActive ? (
+              <p className="text-xs text-amber-600">Nessun canale attivo: i reminder non verranno recapitati</p>
+            ) : null}
           </div>
 
           <div className="flex items-center justify-between rounded-lg border p-3">
