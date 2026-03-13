@@ -36,16 +36,19 @@ export default function EventCard({ activity, category, onEdit, onDelete }) {
 
   const handleDeleteClick = (event) => {
     event.stopPropagation();
+    event.preventDefault();
     setIsDeleteConfirmVisible(true);
   };
 
   const handleDeleteCancel = (event) => {
     event.stopPropagation();
+    event.preventDefault();
     setIsDeleteConfirmVisible(false);
   };
 
   const handleDeleteConfirm = (event) => {
     event.stopPropagation();
+    event.preventDefault();
     setIsDeleteConfirmVisible(false);
     onDelete(activity);
   };
