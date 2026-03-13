@@ -3,13 +3,28 @@ import { getEmailValidity, isValidEmail } from '@/lib/emailValidation';
 
 const STORAGE_KEY = 'smoothflow.settings';
 
+const defaultReminderChannels = {
+  email: true,
+  notification: true
+};
+
 const defaultSettings = {
   theme: 'system',
   weekStartsOn: 'monday',
   defaultView: 'day',
   showWeekends: true,
-  reminderEmail: ''
+  reminderEmail: '',
+  reminderChannels: defaultReminderChannels
 };
+
+const normalizeSettings = (rawSettings = {}) => ({
+  ...defaultSettings,
+  ...rawSettings,
+  reminderChannels: {
+    ...defaultReminderChannels,
+    ...(rawSettings.reminderChannels ?? {})
+  }
+});
 
 const AppSettingsContext = createContext({
   settings: defaultSettings,
@@ -35,7 +50,7 @@ export function AppSettingsProvider({ children }) {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return defaultSettings;
-      return { ...defaultSettings, ...JSON.parse(raw) };
+      return normalizeSettings(JSON.parse(raw));
     } catch {
       return defaultSettings;
     }
@@ -64,7 +79,7 @@ export function AppSettingsProvider({ children }) {
     emailValidity: getEmailValidity(settings.reminderEmail),
     canSaveReminderEmail: isValidEmail(settings.reminderEmail),
     updateSetting: (key, valueToSet) => {
-      setSettings((prev) => ({ ...prev, [key]: valueToSet }));
+      setSettings((prev) => normalizeSettings({ ...prev, [key]: valueToSet }));
     }
   }), [settings]);
 

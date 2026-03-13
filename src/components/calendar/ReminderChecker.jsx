@@ -12,6 +12,9 @@ export default function ReminderChecker({ activities }) {
   useEffect(() => {
     const checkReminders = async () => {
       const now = moment();
+      const reminderChannels = settings.reminderChannels ?? { email: true, notification: true };
+      const canSendEmail = reminderChannels.email;
+      const canSendNotification = reminderChannels.notification;
 
       for (const activity of activities) {
         if (activity.reminder_sent || sentReminders.current.has(activity.id)) continue;
@@ -21,36 +24,45 @@ export default function ReminderChecker({ activities }) {
         const reminderTime = eventTime.clone().subtract(activity.reminder_minutes, 'minutes');
 
         if (now.isSameOrAfter(reminderTime) && now.isBefore(eventTime)) {
-          const result = await sendActivityReminder({ activity, recipientEmail: settings.reminderEmail });
+          let deliverySucceeded = false;
 
-          if (result?.status === 'skipped_no_recipient') {
-            if (!missingRecipientWarnings.current.has(activity.id)) {
-              toast.warning("Reminder non inviato: inserisci un'email in Impostazioni > Promemoria.");
-              missingRecipientWarnings.current.add(activity.id);
+          if (canSendEmail) {
+            const result = await sendActivityReminder({ activity, recipientEmail: settings.reminderEmail });
+
+            if (result?.status === 'skipped_no_recipient') {
+              if (!missingRecipientWarnings.current.has(activity.id)) {
+                toast.warning("Reminder email non inviato: inserisci un'email in Impostazioni > Promemoria.");
+                missingRecipientWarnings.current.add(activity.id);
+              }
+            } else if (result?.status === 'skipped_invalid_recipient') {
+              if (!missingRecipientWarnings.current.has(activity.id)) {
+                toast.warning("Reminder email non inviato: email promemoria non valida in Impostazioni.");
+                missingRecipientWarnings.current.add(activity.id);
+              }
+            } else if (result?.status === 'failed') {
+              toast.error('Invio reminder email fallito. Riproverò automaticamente tra poco.');
+            } else if (result?.status === 'sent') {
+              deliverySucceeded = true;
+              missingRecipientWarnings.current.delete(activity.id);
             }
+          }
+
+          if (canSendNotification) {
+            toast.info(`Promemoria: ${activity.title}`, {
+              duration: 10000,
+            });
+            deliverySucceeded = true;
+          }
+
+          if (!canSendEmail && !canSendNotification) {
             continue;
           }
 
-          if (result?.status === 'skipped_invalid_recipient') {
-            if (!missingRecipientWarnings.current.has(activity.id)) {
-              toast.warning("Reminder non inviato: email promemoria non valida in Impostazioni.");
-              missingRecipientWarnings.current.add(activity.id);
-            }
-            continue;
-          }
-
-          if (result?.status === 'failed') {
-            toast.error('Invio reminder fallito. Riproverò automaticamente tra poco.');
+          if (!deliverySucceeded) {
             continue;
           }
 
           sentReminders.current.add(activity.id);
-          missingRecipientWarnings.current.delete(activity.id);
-
-          toast.info(`Promemoria inviato: ${activity.title}`, {
-            duration: 10000,
-          });
-
           await markReminderAsSent(activity.id);
         }
       }
@@ -59,7 +71,7 @@ export default function ReminderChecker({ activities }) {
     const interval = setInterval(checkReminders, 30000);
     checkReminders();
     return () => clearInterval(interval);
-  }, [activities, settings.reminderEmail]);
+  }, [activities, settings.reminderEmail, settings.reminderChannels]);
 
   return null;
 }
