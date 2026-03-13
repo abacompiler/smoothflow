@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import CategoryBadge, { getCategoryColors } from './CategoryBadge';
 import { motion } from 'framer-motion';
 import { endsNextDay } from '@/lib/activityUtils';
+import { useAppSettings } from '@/lib/AppSettingsContext';
+import { getWeatherForSlot } from '@/services/weather';
+import { getWeatherVisual } from '@/lib/weatherIcons';
 
 export default function EventCard({ activity, category, onEdit, onDelete }) {
   const colors = getCategoryColors(category?.color);
@@ -13,6 +16,8 @@ export default function EventCard({ activity, category, onEdit, onDelete }) {
   const cardRef = useRef(null);
   const [isCompact, setIsCompact] = useState(false);
   const [isDeleteConfirmVisible, setIsDeleteConfirmVisible] = useState(false);
+  const [weather, setWeather] = useState(null);
+  const { settings } = useAppSettings();
 
   useEffect(() => {
     const element = cardRef.current;
@@ -33,6 +38,34 @@ export default function EventCard({ activity, category, onEdit, onDelete }) {
   useEffect(() => {
     setIsDeleteConfirmVisible(false);
   }, [activity.id]);
+
+
+  useEffect(() => {
+    const loadWeather = async () => {
+      const location = settings.weatherLocation;
+
+      if (!settings.weatherEnabled || !location?.lat || !location?.lon || !activity.date) {
+        setWeather(null);
+        return;
+      }
+
+      try {
+        const data = await getWeatherForSlot({
+          lat: location.lat,
+          lon: location.lon,
+          date: activity.date,
+          startTime: activity.start_time
+        });
+        setWeather(data);
+      } catch {
+        setWeather(null);
+      }
+    };
+
+    loadWeather();
+  }, [activity.date, activity.start_time, settings.weatherEnabled, settings.weatherLocation]);
+
+  const weatherVisual = weather ? getWeatherVisual(weather.weatherCode) : null;
 
   const handleDeleteClick = (event) => {
     event.stopPropagation();
@@ -77,6 +110,12 @@ export default function EventCard({ activity, category, onEdit, onDelete }) {
               <Clock className="w-3 h-3" />
               {activity.start_time} - {activity.end_time}{endsTomorrow ? ' (+1g)' : ''}
             </span>
+            {weatherVisual ? (
+              <span className="inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px]" title={`${weatherVisual.label}${typeof weather?.temperature === 'number' ? ` · ${Math.round(weather.temperature)}°C` : ''}`}>
+                <weatherVisual.Icon className="w-3 h-3" />
+                {typeof weather?.temperature === 'number' ? `${Math.round(weather.temperature)}°` : weatherVisual.label}
+              </span>
+            ) : null}
             {isCompact && category && (
               <span className={`inline-flex max-w-[110px] items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${colors.bg} ${colors.text} ${colors.border}`}>
                 <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${colors.dot}`} />

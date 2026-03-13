@@ -14,7 +14,17 @@ const defaultSettings = {
   defaultView: 'day',
   showWeekends: true,
   reminderEmail: '',
-  reminderChannels: defaultReminderChannels
+  reminderChannels: defaultReminderChannels,
+  weatherEnabled: false,
+  weatherUseDeviceLocation: false,
+  weatherLocation: null,
+  notificationQuietHours: {
+    enabled: false,
+    start: '22:00',
+    end: '07:00'
+  },
+  notificationHighPriorityOnlyInQuietHours: true,
+  notificationThrottlePer10Min: 3
 };
 
 const normalizeSettings = (rawSettings = {}) => ({
@@ -23,6 +33,10 @@ const normalizeSettings = (rawSettings = {}) => ({
   reminderChannels: {
     ...defaultReminderChannels,
     ...(rawSettings.reminderChannels ?? {})
+  },
+  notificationQuietHours: {
+    ...defaultSettings.notificationQuietHours,
+    ...(rawSettings.notificationQuietHours ?? {})
   }
 });
 

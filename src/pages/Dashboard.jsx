@@ -77,9 +77,6 @@ export default function Dashboard() {
   };
 
   const handleDelete = (activity) => {
-    const confirmed = window.confirm(`Sei sicuro di voler eliminare l'attività "${activity.title}"?`);
-    if (!confirmed) return;
-
     deleteMutation.mutate(activity.id);
   };
 

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import moment from 'moment';
 import { markReminderAsSent, sendActivityReminder } from '@/services/reminders';
+import { notificationManager } from '@/services/notificationManager';
 import { useAppSettings } from '@/lib/AppSettingsContext';
 
 export default function ReminderChecker({ activities }) {
@@ -48,10 +49,20 @@ export default function ReminderChecker({ activities }) {
           }
 
           if (canSendNotification) {
-            toast.info(`Promemoria: ${activity.title}`, {
-              duration: 10000,
+            const dedupeKey = `${activity.id}:${reminderTime.format('YYYY-MM-DDTHH:mm')}`;
+            const notifyResult = await notificationManager.sendReminder({
+              activity,
+              settings,
+              dedupeKey
             });
-            deliverySucceeded = true;
+
+            if (notifyResult.reason === 'throttled') {
+              toast.warning('Troppe notifiche ravvicinate: alcune sono state rinviate automaticamente.');
+            }
+
+            if (notifyResult.allowed) {
+              deliverySucceeded = true;
+            }
           }
 
           if (!canSendEmail && !canSendNotification) {
