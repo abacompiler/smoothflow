@@ -62,9 +62,3 @@ This creates an unpacked build in `release/` without creating a final installer.
 ## Standalone migration notes
 
 See [`docs/base44-exit-plan.md`](docs/base44-exit-plan.md) for the architecture/migration rationale.
-
-## Servizio email cloud sempre attivo
-
-Per attivare la sincronizzazione eventi verso un backend cloud (es. Cloudflare Worker) e inviare email anche quando il PC è spento, segui la guida:
-
-- [`docs/cloud-email-service-setup.md`](docs/cloud-email-service-setup.md)

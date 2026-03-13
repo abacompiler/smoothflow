@@ -8,11 +8,7 @@ const defaultSettings = {
   weekStartsOn: 'monday',
   defaultView: 'day',
   showWeekends: true,
-  reminderEmail: '',
-  cloudSyncEnabled: false,
-  cloudApiBaseUrl: '',
-  cloudApiToken: '',
-  cloudUserId: 'local-user'
+  reminderEmail: ''
 };
 
 const AppSettingsContext = createContext({
